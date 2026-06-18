@@ -1,0 +1,15 @@
+# Core (required)
+pandas>=2.0
+numpy>=1.24
+
+# Live market data (free). Omit and use --offline to run on synthetic data.
+yfinance>=0.2.40
+
+# Real Claude reasoning for Scanner/Bull/Bear. Omit to run on heuristics.
+anthropic>=0.39
+
+# Alpaca paper-trading REST calls
+requests>=2.31
+
+# MCP server exposing the leak-free EDGAR fundamentals to Claude.
+mcp>=1.0

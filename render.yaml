@@ -1,0 +1,21 @@
+# Render blueprint — deploys the public research server (research deep-dive only;
+# the account-bearing dashboard is hidden by --public). Render injects $PORT,
+# which the app reads; the start command binds 0.0.0.0.
+#
+# Always-on demo: keep plan "starter" (~$7/mo, no cold starts) for a link you
+# hand to an employer. "free" works but sleeps after ~15 min idle, so the first
+# click cold-starts for 30-60s — fine for testing, not for a résumé link.
+services:
+  - type: web
+    name: trader-goblins-research
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m trader_goblins.web --public --host 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: TG_PUBLIC
+        value: "1"
+      - key: TG_EDGAR_UA
+        sync: false   # set in the Render dashboard, e.g. "Trader Goblins research you@email.com"

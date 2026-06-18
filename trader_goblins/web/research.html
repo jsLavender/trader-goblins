@@ -1,0 +1,271 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trader Goblins · research</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+ :root{
+  --bg:#faf9f5;--surface:#ffffff;--line:#e9e7df;--ink:#1f1e1b;--muted:#6b6a64;
+  --faint:#9a988f;--pos:#1a7f4b;--neg:#c0392b;--accent:#534AB7;--chip:#f1efe8;}
+ @media (prefers-color-scheme:dark){:root{
+  --bg:#1a1916;--surface:#242320;--line:#34322d;--ink:#ecebe6;--muted:#a3a199;
+  --faint:#6f6d65;--pos:#5dca8f;--neg:#e88;--accent:#AFA9EC;--chip:#2c2b27;}}
+ *{box-sizing:border-box}
+ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);
+  color:var(--ink);max-width:1040px;margin:0 auto;padding:1.5rem 1.25rem 4rem;line-height:1.55}
+ header{display:flex;flex-wrap:wrap;gap:.75rem 1rem;align-items:baseline;justify-content:space-between;
+  border-bottom:1px solid var(--line);padding-bottom:.9rem;margin-bottom:1.2rem}
+ h1{font-size:21px;font-weight:600;margin:0;letter-spacing:-.01em}
+ h1 a{color:inherit;text-decoration:none}
+ h2{font-size:15px;font-weight:600;margin:2rem 0 .8rem}
+ h2 .sub{font-weight:400;color:var(--faint);font-size:13px;margin-left:.4rem}
+ a{color:var(--accent)}
+ form{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .4rem}
+ input{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:9px;
+  padding:.55rem .7rem;font:inherit;font-size:15px;text-transform:uppercase;width:160px;letter-spacing:.04em}
+ button{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:.55rem 1.1rem;
+  font:inherit;font-weight:600;cursor:pointer}
+ button:disabled{opacity:.5;cursor:default}
+ .hint{color:var(--faint);font-size:12.5px}
+ .featured{margin:.15rem 0 .2rem;font-size:12.5px;color:var(--faint)}
+ .featured a{color:var(--accent);text-decoration:none;cursor:pointer;padding:.12rem .4rem;border-radius:6px}
+ .featured a:hover{background:var(--chip)}
+ .chartbox{position:relative;height:300px;margin:.5rem 0}
+ .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:.4rem 0 0}
+ .seg button{background:var(--surface);color:var(--muted);border:0;padding:.32rem .8rem;font:inherit;
+  font-size:12.5px;font-weight:500;cursor:pointer}
+ .seg button.on{background:var(--accent);color:#fff}
+ .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:.4rem 0 0}
+ .metric{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.65rem .8rem}
+ .metric .l{font-size:11.5px;color:var(--muted)}.metric .v{font-size:19px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+ .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+ .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem}
+ .card .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+ .card .nm{font-weight:600;font-size:15px}
+ .chip{font-size:11px;color:var(--muted);background:var(--chip);border-radius:20px;padding:2px 9px;font-weight:500}
+ .lean{display:flex;align-items:center;gap:8px;margin:.55rem 0 .2rem}
+ .lbar{position:relative;flex:1;height:7px;background:var(--chip);border-radius:4px}
+ .lbar .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line)}
+ .lbar .fill{position:absolute;top:0;bottom:0;border-radius:4px}
+ .lv{width:48px;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;flex:none}
+ .rf{color:var(--muted);font-size:12.5px;margin-top:.45rem;line-height:1.45}
+ .pos{color:var(--pos)}.neg{color:var(--neg)}
+ .kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}
+ .kv:last-child{border-bottom:0}.kv .k{color:var(--muted)}
+ .kv .v{font-variant-numeric:tabular-nums}
+ .verdict{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem;margin:.3rem 0 .4rem}
+ .verdict .call{font-size:26px;font-weight:700;letter-spacing:-.01em}
+ .verdict .score{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+ .empty{color:var(--muted);font-size:13px;background:var(--surface);border:1px dashed var(--line);
+  border-radius:12px;padding:.85rem 1rem}
+ .note{color:var(--faint);font-size:11.5px;margin-top:1.5rem;border-top:1px solid var(--line);padding-top:.6rem}
+ .err{color:var(--neg)}
+ .topnav{position:sticky;top:0;z-index:30;background:var(--bg);
+  margin:-1.5rem -1.25rem 1.1rem;padding:.55rem 1.25rem;border-bottom:1px solid var(--line)}
+ .navrow{display:flex;align-items:center;gap:.5rem 1rem;flex-wrap:wrap}
+ .brand{font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+ .tabs{display:flex;gap:.3rem}
+ .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:.32rem .8rem;border-radius:8px;line-height:1}
+ .tab:hover{background:var(--chip);color:var(--ink)}
+ .tab.on{background:var(--accent);color:#fff}
+</style></head><body>
+<nav class="topnav">
+ <div class="navrow">
+  <a class="brand" href="/">&#128122; Trader Goblins</a>
+  <div class="tabs"><a class="tab" href="/">Dashboard</a><a class="tab on" href="/research">Research</a></div>
+ </div>
+</nav>
+
+<form id="f">
+ <input id="t" name="ticker" placeholder="NVDA" autocomplete="off" autofocus maxlength="8" aria-label="Ticker">
+ <button id="go" type="submit">Deep-dive</button>
+ <span class="hint">live data, not investment advice</span>
+</form>
+<div class="featured" id="featured">Try:
+ <a data-t="AAPL">AAPL</a><a data-t="MSFT">MSFT</a><a data-t="NVDA">NVDA</a><a data-t="GOOGL">GOOGL</a><a data-t="AMZN">AMZN</a><a data-t="KO">KO</a><a data-t="JPM">JPM</a><a data-t="XOM">XOM</a></div>
+
+<div id="out"></div>
+
+<script>
+var out=document.getElementById('out'), inp=document.getElementById('t'),
+    go=document.getElementById('go'), chart=null, _px=null, _view='line';
+var isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+var axis=isDark?'#a3a199':'#6b6a64', grid=isDark?'rgba(160,158,150,.14)':'rgba(120,118,110,.14)';
+// Canvas can't read CSS vars, so resolve the theme colors to real values once.
+function cssv(n,f){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||f;}
+var accentC=cssv('--accent','#534AB7'), posC=cssv('--pos','#1a7f4b'), negC=cssv('--neg','#c0392b');
+
+function pct(x,d){return x==null?'—':(x>=0?'+':'')+(x*100).toFixed(d==null?1:d)+'%';}
+function money(x){return x==null?'—':'$'+Number(x).toLocaleString(undefined,{maximumFractionDigits:2});}
+function bigMoney(x){if(x==null)return '—';var a=Math.abs(x);
+ for(var u of [['B',1e9],['M',1e6],['K',1e3]])if(a>=u[1])return '$'+(x/u[1]).toFixed(1)+u[0];
+ return '$'+Math.round(x);}
+function num(x,d){return x==null?'—':Number(x).toFixed(d==null?2:d);}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function signClass(x){return x>0?'pos':x<0?'neg':'';}
+
+// A lean bar centered at 0, fill grows left (neg) or right (pos) from the middle.
+function leanBar(lean){
+ var v=Math.max(-1,Math.min(1,lean||0)), w=Math.abs(v)*50;
+ var col=v>=0?'var(--pos)':'var(--neg)';
+ var side=v>=0?'left:50%':('right:'+(50)+'%');  // neg fills toward the left of center
+ return '<div class="lean"><div class="lbar"><div class="mid"></div>'+
+  '<div class="fill" style="'+side+';width:'+w+'%;background:'+col+'"></div></div>'+
+  '<span class="lv '+signClass(v)+'">'+(v>=0?'+':'')+v.toFixed(2)+'</span></div>';
+}
+
+function verdictBlock(v){
+ if(!v||!v.available)return '';
+ var cls=v.combined>=0.1?'pos':v.combined<=-0.1?'neg':'';
+ return '<div class="verdict"><span class="call '+cls+'">'+esc(v.verdict)+'</span>'+
+  '<span class="score">combined lean '+(v.combined>=0?'+':'')+v.combined.toFixed(2)+'</span></div>';
+}
+
+function metricsBlock(m){
+ if(!m)return '';
+ var cells=[
+  ['Last price',money(m.last_price)],
+  ['1m',pct(m.return_1m)],['3m',pct(m.return_3m)],['12m',pct(m.return_12m)],
+  ['Volatility',pct(m.annualized_vol)],['Sharpe-like',num(m.sharpe_like)],
+  ['Max drawdown',pct(m.max_drawdown)],['RSI(14)',num(m.rsi_14,0)],
+  ['200-day',m.above_200d?'above':'below']];
+ return '<div class="metrics">'+cells.map(function(c){
+  return '<div class="metric"><div class="l">'+c[0]+'</div><div class="v">'+c[1]+'</div></div>';
+ }).join('')+'</div>';
+}
+
+function curatorsBlock(p){
+ if(!p||!p.available)return '<div class="empty">Curator reads unavailable'+
+  (p&&p.reason?' — '+esc(p.reason):'')+'.</div>';
+ return '<div class="cards">'+p.reads.map(function(r){
+  return '<div class="card"><div class="top"><span class="nm">'+esc(r.name)+'</span>'+
+   '<span class="chip">conf '+r.confidence.toFixed(2)+'</span></div>'+
+   leanBar(r.lean)+'<div class="rf">'+esc(r.narrative)+'</div></div>';
+ }).join('')+'</div>';
+}
+
+function fundamentalsBlock(p){
+ if(!p||!p.available)return '<div class="empty">Analyst / fundamental data unavailable'+
+  (p&&p.reason?' — '+esc(p.reason):'')+'.</div>';
+ var rows=[['Price',money(p.price)],['Mean target',money(p.target)],
+  ['Implied upside',pct(p.upside)],['Consensus',esc(p.consensus||'—')],['P/E',num(p.pe,0)]];
+ var html='<div class="card"><div class="top"><span class="nm">Wall Street &amp; valuation</span>'+
+  '<span class="chip">yfinance · current</span></div>'+
+  rows.map(function(r){return '<div class="kv"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>';}).join('');
+ if(p.analyst)html+='<div class="rf"><b>Analyst</b> '+leanBar(p.analyst.lean)+esc(p.analyst.note)+'</div>';
+ if(p.value)html+='<div class="rf"><b>Value</b> '+leanBar(p.value.lean)+esc(p.value.note)+'</div>';
+ return html+'</div>';
+}
+
+function edgarBlock(p){
+ if(!p||!p.available)return '<div class="empty">EDGAR fundamentals unavailable'+
+  (p&&p.reason?' — '+esc(p.reason):'')+'.</div>';
+ var f=p.filing||{};
+ var rows=[['Revenue',bigMoney(p.revenue)],['Net income',bigMoney(p.net_income)],
+  ['Profit margin',pct(p.profit_margin)],['Rev growth (YoY)',pct(p.revenue_growth_yoy)],
+  ['P/E',num(p.pe,1)],['P/B',num(p.pb,1)],['ROE',pct(p.roe)],['Market cap',bigMoney(p.market_cap)]];
+ var html='<div class="card"><div class="top"><span class="nm">SEC EDGAR · point-in-time</span>'+
+  '<span class="chip">leak-free</span></div>'+
+  rows.map(function(r){return '<div class="kv"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>';}).join('');
+ if(f.period_end)html+='<div class="rf">From the 10-K for period ending '+esc(f.period_end)+
+  (f.filed?', filed '+esc(f.filed):'')+'.</div>';
+ if(p.value_read)html+='<div class="rf">'+leanBar(p.value_read.lean)+esc(p.value_read.note)+'</div>';
+ return html+'</div>';
+}
+
+function drawLine(series){
+ if(chart){chart.destroy();chart=null;}
+ var cv=document.getElementById('px');
+ if(!cv||!series)return;
+ chart=new Chart(cv,{type:'line',data:{labels:series.dates,
+  datasets:[{data:series.closes,borderColor:accentC,borderWidth:1.6,
+   pointRadius:0,tension:.15,fill:false}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+   tooltip:{callbacks:{label:function(c){return money(c.parsed.y);}}}},
+   scales:{x:{ticks:{color:axis,maxTicksLimit:6},grid:{display:false}},
+    y:{ticks:{color:axis,callback:function(v){return '$'+v;}},grid:{color:grid}}}}});
+}
+
+// Hand-drawn candlesticks (no external plugin): destroy any Chart.js instance,
+// then paint wicks + bodies straight onto the canvas, theme-aware.
+function drawCandles(ohlc){
+ if(chart){chart.destroy();chart=null;}
+ var cv=document.getElementById('px'); if(!cv||!ohlc||!ohlc.length)return;
+ var box=cv.parentNode, dpr=window.devicePixelRatio||1, W=box.clientWidth, H=box.clientHeight;
+ cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px';
+ var g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+ var padL=52,padR=10,padT=10,padB=22, plotW=W-padL-padR, plotH=H-padT-padB;
+ var lo=Math.min.apply(null,ohlc.map(d=>d.l)), hi=Math.max.apply(null,ohlc.map(d=>d.h));
+ var m=(hi-lo)*0.05||1; lo-=m; hi+=m;
+ function Y(p){return padT+plotH*(1-(p-lo)/(hi-lo));}
+ g.font='11px system-ui'; g.lineWidth=1;
+ for(var i=0;i<=5;i++){var p=lo+(hi-lo)*i/5, y=Y(p);
+  g.strokeStyle=grid; g.beginPath(); g.moveTo(padL,y); g.lineTo(W-padR,y); g.stroke();
+  g.fillStyle=axis; g.textAlign='right'; g.fillText('$'+p.toFixed(0),padL-6,y+3);}
+ var n=ohlc.length, cw=plotW/n, bw=Math.max(1,Math.min(cw*0.7,9));
+ ohlc.forEach(function(d,i){
+  var cx=padL+cw*(i+0.5), col=d.c>=d.o?posC:negC;
+  g.strokeStyle=col; g.fillStyle=col;
+  g.beginPath(); g.moveTo(cx,Y(d.h)); g.lineTo(cx,Y(d.l)); g.stroke();
+  var yo=Y(d.o),yc=Y(d.c); g.fillRect(cx-bw/2,Math.min(yo,yc),bw,Math.max(1,Math.abs(yc-yo)));
+ });
+ g.fillStyle=axis; g.textAlign='center';
+ for(var j=0;j<n;j+=Math.ceil(n/6)){g.fillText(ohlc[j].t.slice(2),padL+cw*(j+0.5),H-7);}
+}
+
+function redrawPrice(){
+ if(!_px)return;
+ if(_view==='candles' && _px.ohlc) drawCandles(_px.ohlc);
+ else drawLine(_px.series);
+}
+
+function render(d){
+ if(d.error){out.innerHTML='<div class="empty err">'+esc(d.error)+'</div>';return;}
+ var price=d.price||{}, m=price.available?price.metrics:null;
+ var h=verdictBlock(d.verdict);
+ h+='<h2>'+esc(d.ticker)+' <span class="sub">price &amp; metrics</span></h2>';
+ if(m){
+  if(price.ohlc&&price.ohlc.length)h+='<div class="seg">'+
+   '<button data-v="line"'+(_view==='line'?' class="on"':'')+'>Line</button>'+
+   '<button data-v="candles"'+(_view==='candles'?' class="on"':'')+'>Candles</button></div>';
+  h+='<div class="chartbox"><canvas id="px"></canvas></div>'+metricsBlock(m);
+ }
+ else{h+='<div class="empty">No price data'+(price.reason?' — '+esc(price.reason):'')+'.</div>';}
+ h+='<h2>Curator goblins <span class="sub">each lens’ read</span></h2>'+curatorsBlock(d.curators);
+ h+='<h2>Fundamentals</h2><div class="cards">'+fundamentalsBlock(d.fundamentals)+edgarBlock(d.edgar)+'</div>';
+ h+='<div class="note">As of '+esc(d.as_of)+' · live data, deterministic heuristics · not investment advice.</div>';
+ out.innerHTML=h;
+ _px=m?price:null;
+ redrawPrice();
+}
+
+// Line/Candles toggle (delegated, survives re-render).
+out.addEventListener('click',function(e){
+ var b=e.target.closest('[data-v]'); if(!b||!_px)return;
+ _view=b.getAttribute('data-v');
+ out.querySelectorAll('[data-v]').forEach(function(x){
+  x.classList.toggle('on',x.getAttribute('data-v')===_view);});
+ redrawPrice();
+});
+
+function load(ticker){
+ ticker=(ticker||'').toUpperCase().trim();
+ if(!ticker)return;
+ inp.value=ticker; go.disabled=true;
+ out.innerHTML='<div class="empty">Researching '+esc(ticker)+'… (first load fetches live data)</div>';
+ fetch('/api/deepdive?ticker='+encodeURIComponent(ticker))
+  .then(function(r){return r.json();})
+  .then(function(d){render(d);
+   history.replaceState(null,'','/research?ticker='+encodeURIComponent(ticker));})
+  .catch(function(e){out.innerHTML='<div class="empty err">Request failed: '+esc(e.message)+'</div>';})
+  .finally(function(){go.disabled=false;});
+}
+
+document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();load(inp.value);});
+document.getElementById('featured').addEventListener('click',function(e){
+ var a=e.target.closest('[data-t]'); if(!a)return;
+ e.preventDefault(); load(a.getAttribute('data-t'));});
+var pre=new URLSearchParams(location.search).get('ticker');
+if(pre)load(pre);
+</script>
+</body></html>
