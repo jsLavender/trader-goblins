@@ -99,8 +99,8 @@ def _curators_panel(metrics: Optional[Dict[str, Any]]) -> Dict[str, Any]:
                           "lean": round(lean, 3), "confidence": round(conf, 3),
                           "narrative": c.heuristic_narrative(m, lean, conf)})
         return {"available": True, "reads": reads}
-    except Exception as e:
-        return {"available": False, "reason": f"{type(e).__name__}: {e}"}
+    except Exception:
+        return {"available": False, "reason": "could not compute curator reads"}
 
 
 def _fundamentals_panel(ticker: str) -> Dict[str, Any]:

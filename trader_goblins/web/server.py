@@ -64,16 +64,36 @@ def _clean_ticker(raw: str) -> str:
     return "".join(ch for ch in raw.upper() if ch.isalnum() or ch in ".-")[:8]
 
 
+# Sent on every response — defense-in-depth for a public, read-only site.
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; connect-src 'self'; "
+        "img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+    ),
+}
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "TraderGoblinsResearch/1.0"
+    server_version = "TraderGoblins"
+    sys_version = ""      # suppress the "Python/3.12.x" version disclosure
     public = False        # set True (via --public) to hide the dashboard for internet exposure
 
     # ── helpers ───────────────────────────────────────────────────────────────
+    def _security_headers(self) -> None:
+        for name, value in _SECURITY_HEADERS.items():
+            self.send_header(name, value)
+
     def _send(self, code: int, body, ctype: str) -> None:
         data = body.encode("utf-8") if isinstance(body, str) else body
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
+        self._security_headers()
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(data)
@@ -82,11 +102,20 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(302)
         self.send_header("Location", location)
         self.send_header("Content-Length", "0")
+        self._security_headers()
         self.end_headers()
 
     def _client_ip(self) -> str:
-        # Behind Cloudflare the real visitor IP is in CF-Connecting-IP.
-        return self.headers.get("CF-Connecting-IP") or self.client_address[0]
+        # The socket peer is a proxy (Render/Cloudflare), so trust the edge's
+        # client-IP headers first, then the first X-Forwarded-For hop, then the
+        # raw peer as a last resort. Without this, every visitor shares one bucket.
+        h = self.headers
+        ip = h.get("CF-Connecting-IP") or h.get("True-Client-IP")
+        if not ip:
+            xff = h.get("X-Forwarded-For")
+            if xff:
+                ip = xff.split(",")[0].strip()
+        return ip or self.client_address[0]
 
     def _send_file(self, path: Path, ctype: str, fallback: str) -> None:
         try:
@@ -128,7 +157,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             result = build_deepdive(ticker)
         except Exception as e:                 # build_deepdive shouldn't raise, but be safe
-            result = {"ticker": ticker, "error": f"{type(e).__name__}: {e}"}
+            print(f"  deepdive error for {ticker}: {type(e).__name__}: {e}")
+            result = {"ticker": ticker, "error": "internal error building the deep-dive"}
         self._send(200, json.dumps(result, default=str),
                    "application/json; charset=utf-8")
 
