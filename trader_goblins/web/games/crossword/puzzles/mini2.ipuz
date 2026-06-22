@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #2",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "Drum with a buzzing wire, or a trap"
+   ],
+   [
+    6,
+    "Organized-crime family"
+   ],
+   [
+    7,
+    "Little symbols you tap on a phone"
+   ],
+   [
+    8,
+    "“Not these, but ___”"
+   ],
+   [
+    9,
+    "Place to book a room for the night"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "Most common English surname"
+   ],
+   [
+    2,
+    "Cheesy tortilla chip"
+   ],
+   [
+    3,
+    "Quietly underway; happening"
+   ],
+   [
+    4,
+    "Step after shampooing"
+   ],
+   [
+    5,
+    "Painter's three-legged stand"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "S",
+   "N",
+   "A",
+   "R",
+   "E"
+  ],
+  [
+   "M",
+   "A",
+   "F",
+   "I",
+   "A"
+  ],
+  [
+   "I",
+   "C",
+   "O",
+   "N",
+   "S"
+  ],
+  [
+   "T",
+   "H",
+   "O",
+   "S",
+   "E"
+  ],
+  [
+   "H",
+   "O",
+   "T",
+   "E",
+   "L"
+  ]
+ ]
+}

@@ -13,3 +13,8 @@ __pycache__/
 reports/
 
 backups/
+
+# Game source clones + node_modules used only to build web/games/* (the built
+# bundles ARE committed; their multi-hundred-MB sources are not).
+.gamebuild/
+node_modules/

@@ -50,6 +50,8 @@ _RESEARCH_HTML = Path(__file__).with_name("research.html")
 _DASHBOARD_HTML = _ROOT / "reports" / "dashboard.html"
 _GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
 _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
+_GAMES_PAGE_HTML = Path(__file__).with_name("games.html")  # /games arcade hub
+_GAMES_DIR = Path(__file__).with_name("games").resolve()   # the built word-game bundles
 
 # Content types for the static game assets (small fixed map — no mimetypes guesswork).
 _GAME_TYPES = {
@@ -59,6 +61,25 @@ _GAME_TYPES = {
     ".pck": "application/octet-stream",
     ".png": "image/png",
     ".json": "application/json; charset=utf-8",
+}
+
+# Content types for the word-game bundles under /games/* (React/Vue/Parcel builds
+# + the static crossword player + .ipuz puzzle files).
+_GAMES_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".mjs": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".ipuz": "application/json; charset=utf-8",   # crossword puzzles (ipuz = JSON)
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".ico": "image/x-icon",
+    ".txt": "text/plain; charset=utf-8",
+    ".webmanifest": "application/manifest+json",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".ttf": "font/ttf",
 }
 
 _LANDING = (
@@ -102,6 +123,25 @@ _GAME_HEADERS = {
         "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob:; media-src 'self' blob:; "
+        "worker-src 'self' blob:; child-src 'self' blob:; "
+        "connect-src 'self'; base-uri 'none'; frame-ancestors 'self'"
+    ),
+}
+
+# CSP for the word-game bundles under /games/*. They are third-party SPA builds,
+# so they need looser rules than the strict site default: inline scripts (CRA's
+# runtime chunk, jQuery's script-element eval), inline styles, and Connections'
+# one Google Font. Still no remote script execution, no framing by other sites.
+_GAMES_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
+        "img-src 'self' data: blob:; "
         "worker-src 'self' blob:; child-src 'self' blob:; "
         "connect-src 'self'; base-uri 'none'; frame-ancestors 'self'"
     ),
@@ -173,11 +213,41 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(data)
 
+    def _serve_games_asset(self, raw_path: str) -> None:
+        """Serve the word-game bundles under /games/*. /games (bare) -> the hub
+        page; /games/<game>/ -> that bundle's index.html; everything else a static
+        file inside _GAMES_DIR. Path-traversal guarded, binary-safe, games CSP."""
+        rel = raw_path[len("/games"):].lstrip("/")
+        if not rel:                                   # /games or /games/
+            self._send_file(_GAMES_PAGE_HTML, "text/html; charset=utf-8",
+                            "games.html missing from the install")
+            return
+        target = (_GAMES_DIR / rel).resolve()
+        if target.is_dir():                           # /games/wordle -> .../wordle/index.html
+            target = target / "index.html"
+        # Containment guard: the resolved path must stay inside _GAMES_DIR.
+        if _GAMES_DIR not in target.parents or not target.is_file():
+            self._send(404, "not found", "text/plain; charset=utf-8")
+            return
+        data = target.read_bytes()
+        ctype = _GAMES_TYPES.get(target.suffix.lower(), "application/octet-stream")
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        for name, value in _GAMES_HEADERS.items():
+            self.send_header(name, value)
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
     # ── routing ───────────────────────────────────────────────────────────────
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/game" or parsed.path.startswith("/game/"):
             self._serve_game_asset(parsed.path)
+            return
+        if parsed.path == "/games" or parsed.path.startswith("/games/"):
+            self._serve_games_asset(parsed.path)
             return
         route = parsed.path.rstrip("/") or "/"
         if route == "/":

@@ -1,0 +1,93 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trader Goblins · Games</title>
+<style>
+ :root{
+  --bg:#faf9f5;--surface:#ffffff;--line:#e9e7df;--ink:#1f1e1b;--muted:#6b6a64;
+  --faint:#9a988f;--accent:#534AB7;--chip:#f1efe8;}
+ @media (prefers-color-scheme:dark){:root{
+  --bg:#1a1916;--surface:#242320;--line:#34322d;--ink:#ecebe6;--muted:#a3a199;
+  --faint:#6f6d65;--accent:#AFA9EC;--chip:#2c2b27;}}
+ *{box-sizing:border-box}
+ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);
+  color:var(--ink);max-width:1040px;margin:0 auto;padding:1.5rem 1.25rem 3rem;line-height:1.55}
+ a{color:var(--accent)}
+ .topnav{position:sticky;top:0;z-index:30;background:var(--bg);
+  margin:-1.5rem -1.25rem 1.1rem;padding:.55rem 1.25rem;border-bottom:1px solid var(--line)}
+ .navrow{display:flex;align-items:center;gap:.5rem 1rem;flex-wrap:wrap}
+ .brand{font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+ .tabs{display:flex;gap:.3rem}
+ .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:.32rem .8rem;border-radius:8px;line-height:1}
+ .tab:hover{background:var(--chip);color:var(--ink)}
+ .tab.on{background:var(--accent);color:#fff}
+ h1{font-size:21px;font-weight:600;margin:0 0 .2rem;letter-spacing:-.01em}
+ .sub{color:var(--muted);font-size:13.5px;margin:0 0 1.4rem}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:1rem}
+ .card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:1.1rem 1.15rem;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s,box-shadow .15s}
+ a.card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,0,0,.10)}
+ .emoji{font-size:30px;line-height:1;margin-bottom:.55rem}
+ .ctitle{font-size:16px;font-weight:600;margin:0 0 .25rem}
+ .cdesc{font-size:13px;color:var(--muted);margin:0;flex:1}
+ .minis{margin:.7rem 0 0;display:flex;flex-wrap:wrap;gap:.35rem}
+ .mini{font-size:12px;background:var(--chip);color:var(--ink);text-decoration:none;
+  padding:.25rem .55rem;border-radius:7px;border:1px solid var(--line)}
+ .mini:hover{border-color:var(--accent)}
+ .foot{color:var(--faint);font-size:12px;margin-top:1.6rem;border-top:1px solid var(--line);padding-top:1rem}
+</style></head><body>
+<nav class="topnav">
+ <div class="navrow">
+  <a class="brand" href="/">&#128122; Trader Goblins</a>
+  <div class="tabs">
+   <a class="tab" href="/">Dashboard</a>
+   <a class="tab" href="/research">Research</a>
+   <a class="tab on" href="/games">Games</a>
+  </div>
+ </div>
+</nav>
+
+<h1>&#127918; Games</h1>
+<p class="sub">A little home arcade &mdash; free, ad-free, runs entirely in your browser. Progress saves on this device.</p>
+
+<div class="grid">
+
+ <a class="card" href="/games/spellingbee/">
+  <div class="emoji">&#128029;</div>
+  <p class="ctitle">Spelling Bee</p>
+  <p class="cdesc">Make as many words as you can from seven letters &mdash; every word uses the center letter. Find the pangram. A fresh puzzle whenever you want one.</p>
+ </a>
+
+ <a class="card" href="/games/wordle/">
+  <div class="emoji">&#129001;</div>
+  <p class="ctitle">Wordle</p>
+  <p class="cdesc">Guess the five-letter word in six tries. Green is right spot, yellow is wrong spot. Play as many as you like.</p>
+ </a>
+
+ <a class="card" href="/games/connections/">
+  <div class="emoji">&#128279;</div>
+  <p class="ctitle">Connections</p>
+  <p class="cdesc">Sort sixteen words into four secret groups of four. Watch out for the overlaps that fit more than one group.</p>
+ </a>
+
+ <div class="card">
+  <div class="emoji">&#9999;&#65039;</div>
+  <p class="ctitle">Crossword</p>
+  <p class="cdesc">Three homemade mini crosswords to start. You can also open any <code>.puz</code> / <code>.ipuz</code> file from the player.</p>
+  <div class="minis">
+   <a class="mini" href="/games/crossword/index.html?file=puzzles/mini1.ipuz">Mini&nbsp;#1</a>
+   <a class="mini" href="/games/crossword/index.html?file=puzzles/mini2.ipuz">Mini&nbsp;#2</a>
+   <a class="mini" href="/games/crossword/index.html?file=puzzles/mini3.ipuz">Mini&nbsp;#3</a>
+   <a class="mini" href="/games/crossword/">Open a file&hellip;</a>
+  </div>
+ </div>
+
+ <a class="card" href="/play">
+  <div class="emoji">&#129482;</div>
+  <p class="ctitle">Mech-E-Mech</p>
+  <p class="cdesc">A command-not-twitch mech roguelite. Steer a slow fortress through a branching run while your turrets auto-battle the swarm.</p>
+ </a>
+
+</div>
+
+<p class="foot">All games are open-source clones (their own word lists / original puzzles), self-hosted here. Built with the Spelling Bee by ConorSheehan1 (MIT), react-wordle (MIT), react-connections-game (GPL-3.0), and the Crossword&nbsp;Nexus player (BSD-3). The crosswords here are original.</p>
+</body></html>
