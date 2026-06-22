@@ -48,6 +48,18 @@ def _rate_ok(ip: str) -> bool:
 _ROOT = Path(__file__).resolve().parents[2]
 _RESEARCH_HTML = Path(__file__).with_name("research.html")
 _DASHBOARD_HTML = _ROOT / "reports" / "dashboard.html"
+_GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
+_GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
+
+# Content types for the static game assets (small fixed map — no mimetypes guesswork).
+_GAME_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".wasm": "application/wasm",
+    ".pck": "application/octet-stream",
+    ".png": "image/png",
+    ".json": "application/json; charset=utf-8",
+}
 
 _LANDING = (
     "<!doctype html><meta charset='utf-8'><title>Trader Goblins</title>"
@@ -74,6 +86,24 @@ _SECURITY_HEADERS = {
         "script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline'; connect-src 'self'; "
         "img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+    ),
+}
+
+# The Godot WebAssembly game needs a looser CSP than the strict site default:
+# WASM compilation requires 'wasm-unsafe-eval', the engine spins up blob: workers,
+# and the page is meant to be framed by our own /play wrapper (frame-ancestors
+# 'self', X-Frame-Options SAMEORIGIN — NOT the site-wide DENY). Scoped to /game/*.
+_GAME_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; media-src 'self' blob:; "
+        "worker-src 'self' blob:; child-src 'self' blob:; "
+        "connect-src 'self'; base-uri 'none'; frame-ancestors 'self'"
     ),
 }
 
@@ -123,9 +153,32 @@ class Handler(BaseHTTPRequestHandler):
         except FileNotFoundError:
             self._send(200, fallback, "text/html; charset=utf-8")
 
+    def _serve_game_asset(self, raw_path: str) -> None:
+        """Serve a file from the Godot export under /game/*, binary-safe and
+        path-traversal-guarded, with the looser game CSP/framing headers."""
+        rel = raw_path[len("/game"):].lstrip("/") or "index.html"
+        target = (_GAME_DIR / rel).resolve()
+        # Containment guard: the resolved path must stay inside _GAME_DIR.
+        if _GAME_DIR not in target.parents or not target.is_file():
+            self._send(404, "not found", "text/plain; charset=utf-8")
+            return
+        data = target.read_bytes()
+        ctype = _GAME_TYPES.get(target.suffix.lower(), "application/octet-stream")
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        for name, value in _GAME_HEADERS.items():
+            self.send_header(name, value)
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
     # ── routing ───────────────────────────────────────────────────────────────
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/game" or parsed.path.startswith("/game/"):
+            self._serve_game_asset(parsed.path)
+            return
         route = parsed.path.rstrip("/") or "/"
         if route == "/":
             if self.public:                       # hide the account-bearing dashboard
@@ -135,6 +188,9 @@ class Handler(BaseHTTPRequestHandler):
         elif route == "/research":
             self._send_file(_RESEARCH_HTML, "text/html; charset=utf-8",
                             "research.html missing from the install")
+        elif route == "/play":
+            self._send_file(_GAME_PAGE_HTML, "text/html; charset=utf-8",
+                            "game.html missing from the install")
         elif route == "/api/deepdive":
             if not _rate_ok(self._client_ip()):
                 self._send(429, json.dumps({"error": "rate limited — slow down a moment"}),

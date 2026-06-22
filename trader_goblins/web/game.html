@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trader Goblins · Mech-E-Mech</title>
+<style>
+ :root{
+  --bg:#faf9f5;--surface:#ffffff;--line:#e9e7df;--ink:#1f1e1b;--muted:#6b6a64;
+  --faint:#9a988f;--accent:#534AB7;--chip:#f1efe8;}
+ @media (prefers-color-scheme:dark){:root{
+  --bg:#1a1916;--surface:#242320;--line:#34322d;--ink:#ecebe6;--muted:#a3a199;
+  --faint:#6f6d65;--accent:#AFA9EC;--chip:#2c2b27;}}
+ *{box-sizing:border-box}
+ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);
+  color:var(--ink);max-width:1040px;margin:0 auto;padding:1.5rem 1.25rem 3rem;line-height:1.55}
+ a{color:var(--accent)}
+ .topnav{position:sticky;top:0;z-index:30;background:var(--bg);
+  margin:-1.5rem -1.25rem 1.1rem;padding:.55rem 1.25rem;border-bottom:1px solid var(--line)}
+ .navrow{display:flex;align-items:center;gap:.5rem 1rem;flex-wrap:wrap}
+ .brand{font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+ .tabs{display:flex;gap:.3rem}
+ .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:.32rem .8rem;border-radius:8px;line-height:1}
+ .tab:hover{background:var(--chip);color:var(--ink)}
+ .tab.on{background:var(--accent);color:#fff}
+ h1{font-size:21px;font-weight:600;margin:0 0 .2rem;letter-spacing:-.01em}
+ .sub{color:var(--muted);font-size:13.5px;margin:0 0 .2rem}
+ .controls{color:var(--faint);font-size:12.5px;margin:.1rem 0 0}
+ .controls b{color:var(--muted);font-weight:600}
+ .stage{display:flex;justify-content:center;margin:1.1rem 0 .4rem}
+ .frame{height:min(960px,82vh);aspect-ratio:540/960;max-width:96vw;border:1px solid var(--line);
+  border-radius:16px;overflow:hidden;background:#11100e;box-shadow:0 6px 28px rgba(0,0,0,.14)}
+ iframe{width:100%;height:100%;border:0;display:block}
+ .bar{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;font-size:12.5px;color:var(--faint)}
+ .bar a{text-decoration:none}
+</style></head><body>
+<nav class="topnav">
+ <div class="navrow">
+  <a class="brand" href="/">&#128122; Trader Goblins</a>
+  <div class="tabs">
+   <a class="tab" href="/">Dashboard</a>
+   <a class="tab" href="/research">Research</a>
+   <a class="tab on" href="/play">Mech-E-Mech</a>
+  </div>
+ </div>
+</nav>
+
+<h1>&#129482; Mech-E-Mech</h1>
+<p class="sub">A command-not-twitch mech roguelite. Steer a slow fortress through a branching run; your turrets auto-battle the swarm.</p>
+<p class="controls"><b>Hold / drag</b> to move &middot; <b>Space</b> (or the button) fires missiles &middot; <b>1&nbsp;/&nbsp;2&nbsp;/&nbsp;3</b> switch ammo &middot; <b>tap a lit map node</b> to choose your route.</p>
+
+<div class="stage">
+ <div class="frame">
+  <iframe src="/game/index.html" title="Mech-E-Mech" allow="autoplay; fullscreen; gamepad" allowfullscreen></iframe>
+ </div>
+</div>
+
+<div class="bar">
+ <a href="/game/index.html" target="_blank" rel="noopener">Open fullscreen &#8599;</a>
+ <span>Built in Godot &middot; runs entirely in your browser</span>
+</div>
+</body></html>
