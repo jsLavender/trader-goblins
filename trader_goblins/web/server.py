@@ -47,6 +47,8 @@ def _rate_ok(ip: str) -> bool:
 
 _ROOT = Path(__file__).resolve().parents[2]
 _RESEARCH_HTML = Path(__file__).with_name("research.html")
+_OG_IMAGE = Path(__file__).with_name("og.png")        # social link-preview card
+_FAVICON = Path(__file__).with_name("favicon.png")    # tab / bookmark icon
 _DASHBOARD_HTML = _ROOT / "reports" / "dashboard.html"
 _GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
 _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
@@ -193,6 +195,21 @@ class Handler(BaseHTTPRequestHandler):
         except FileNotFoundError:
             self._send(200, fallback, "text/html; charset=utf-8")
 
+    def _send_image(self, path: Path, ctype: str) -> None:
+        try:
+            data = path.read_bytes()
+        except FileNotFoundError:
+            self._send(404, "not found", "text/plain; charset=utf-8")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self._security_headers()
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
     def _serve_game_asset(self, raw_path: str) -> None:
         """Serve a file from the Godot export under /game/*, binary-safe and
         path-traversal-guarded, with the looser game CSP/framing headers."""
@@ -267,8 +284,10 @@ class Handler(BaseHTTPRequestHandler):
                            "application/json; charset=utf-8")
                 return
             self._api_deepdive(parse_qs(parsed.query))
-        elif route == "/favicon.ico":
-            self._send(204, b"", "image/x-icon")
+        elif route == "/og.png":
+            self._send_image(_OG_IMAGE, "image/png")
+        elif route in ("/favicon.png", "/favicon.ico"):
+            self._send_image(_FAVICON, "image/png")
         else:
             self._send(404, "not found", "text/plain; charset=utf-8")
 
