@@ -82,6 +82,16 @@
  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:.32rem .8rem;border-radius:8px;line-height:1}
  .tab:hover{background:var(--chip);color:var(--ink)}
  .tab.on{background:var(--accent);color:#fff}
+ .hero{display:block;padding:1.5rem 0 .2rem;margin-bottom:1.3rem;border-bottom:1px solid var(--line)}
+ .hero .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+ .hero h1{font-size:clamp(30px,5.6vw,46px);font-weight:700;letter-spacing:-.02em;line-height:1.06;margin:.5rem 0 .55rem}
+ .hero h1 .g{color:var(--accent)}
+ .hero .lede{font-size:clamp(15px,2.3vw,17.5px);color:var(--muted);max-width:54ch;line-height:1.55;margin:0 0 1rem}
+ .cast{display:flex;flex-wrap:wrap;gap:.4rem}
+ .cast .gob{font-size:12.5px;font-weight:600;padding:.24rem .62rem;border-radius:20px;border:1.5px solid;line-height:1}
+ body.searched .hero{padding:.55rem 0 .2rem;margin-bottom:1rem}
+ body.searched .hero .lede,body.searched .hero .cast,body.searched .hero .eyebrow{display:none}
+ body.searched .hero h1{font-size:22px;margin:.1rem 0 .3rem}
 </style></head><body>
 <nav class="topnav">
  <div class="navrow">
@@ -89,6 +99,19 @@
   <div class="tabs"><a class="tab" href="/">Dashboard</a><a class="tab on" href="/research">Research</a><a class="tab" href="/games">Games</a></div>
  </div>
 </nav>
+
+<header class="hero">
+ <div class="eyebrow">AI equity research · leak-free SEC data</div>
+ <h1>A firm of goblins,<br>arguing over your <span class="g">stocks</span>.</h1>
+ <p class="lede">Type any ticker and a cast of opinionated AI analysts each size it up their own way — momentum, value, bull, bear — then argue it into one BUY / HOLD / AVOID verdict, on live prices and real SEC filings.</p>
+ <div class="cast">
+  <span class="gob" style="color:#378ADD;border-color:#378ADD">Quant</span>
+  <span class="gob" style="color:var(--pos);border-color:var(--pos)">Bull</span>
+  <span class="gob" style="color:var(--neg);border-color:var(--neg)">Bear</span>
+  <span class="gob" style="color:var(--accent);border-color:var(--accent)">Momentum</span>
+  <span class="gob" style="color:#1D9E75;border-color:#1D9E75">Value</span>
+ </div>
+</header>
 
 <form id="f">
  <input id="t" name="ticker" placeholder="NVDA" autocomplete="off" autofocus maxlength="8" aria-label="Ticker">
@@ -265,6 +288,7 @@ out.addEventListener('click',function(e){
 function load(ticker){
  ticker=(ticker||'').toUpperCase().trim();
  if(!ticker)return;
+ document.body.classList.add('searched');   // compact the hero once research starts
  inp.value=ticker; go.disabled=true;
  out.innerHTML='<div class="empty">Researching '+esc(ticker)+'… (first load fetches live data)</div>';
  fetch('/api/deepdive?ticker='+encodeURIComponent(ticker))
