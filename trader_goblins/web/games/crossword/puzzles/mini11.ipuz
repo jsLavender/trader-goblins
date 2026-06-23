@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #11",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "Relating to hearing"
+   ],
+   [
+    6,
+    "Replay speed, informally"
+   ],
+   [
+    7,
+    "Cold-shoulders"
+   ],
+   [
+    8,
+    "Two under par; national bird"
+   ],
+   [
+    9,
+    "Oaks and elms"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "Something valuable you own"
+   ],
+   [
+    2,
+    "Of the forearm bone"
+   ],
+   [
+    3,
+    "Red blush makeup"
+   ],
+   [
+    4,
+    "Stroll leisurely"
+   ],
+   [
+    5,
+    "Misplaces; doesn't win"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "A",
+   "U",
+   "R",
+   "A",
+   "L"
+  ],
+  [
+   "S",
+   "L",
+   "O",
+   "M",
+   "O"
+  ],
+  [
+   "S",
+   "N",
+   "U",
+   "B",
+   "S"
+  ],
+  [
+   "E",
+   "A",
+   "G",
+   "L",
+   "E"
+  ],
+  [
+   "T",
+   "R",
+   "E",
+   "E",
+   "S"
+  ]
+ ]
+}

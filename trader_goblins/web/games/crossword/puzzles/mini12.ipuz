@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #12",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "Sudden burst of light"
+   ],
+   [
+    6,
+    "Spooky and strange"
+   ],
+   [
+    7,
+    "Hot emotion"
+   ],
+   [
+    8,
+    "Kitchen cooktop"
+   ],
+   [
+    9,
+    "Carries; or roomy bags"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "Lavish meal"
+   ],
+   [
+    2,
+    "Slowly, in music"
+   ],
+   [
+    3,
+    "Insiders' slang"
+   ],
+   [
+    4,
+    "Kitchen strainer"
+   ],
+   [
+    5,
+    "'___ to you!' (a toast)"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "F",
+   "L",
+   "A",
+   "S",
+   "H"
+  ],
+  [
+   "E",
+   "E",
+   "R",
+   "I",
+   "E"
+  ],
+  [
+   "A",
+   "N",
+   "G",
+   "E",
+   "R"
+  ],
+  [
+   "S",
+   "T",
+   "O",
+   "V",
+   "E"
+  ],
+  [
+   "T",
+   "O",
+   "T",
+   "E",
+   "S"
+  ]
+ ]
+}

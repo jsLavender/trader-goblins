@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #9",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "Gag on a bite"
+   ],
+   [
+    6,
+    "One who gives stars or scores"
+   ],
+   [
+    7,
+    "Extreme, as a marathon"
+   ],
+   [
+    8,
+    "Levels out; not odds"
+   ],
+   [
+    9,
+    "Curt and to the point"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "Little vinegar bottle"
+   ],
+   [
+    2,
+    "Cut in two"
+   ],
+   [
+    3,
+    "Playful river swimmer"
+   ],
+   [
+    4,
+    "Adjusts spacing between letters"
+   ],
+   [
+    5,
+    "Rub out"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "C",
+   "H",
+   "O",
+   "K",
+   "E"
+  ],
+  [
+   "R",
+   "A",
+   "T",
+   "E",
+   "R"
+  ],
+  [
+   "U",
+   "L",
+   "T",
+   "R",
+   "A"
+  ],
+  [
+   "E",
+   "V",
+   "E",
+   "N",
+   "S"
+  ],
+  [
+   "T",
+   "E",
+   "R",
+   "S",
+   "E"
+  ]
+ ]
+}

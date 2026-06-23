@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #7",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "In the midst of"
+   ],
+   [
+    6,
+    "Romantic partner"
+   ],
+   [
+    7,
+    "Sung drama, often in Italian"
+   ],
+   [
+    8,
+    "Bold to the point of cheeky"
+   ],
+   [
+    9,
+    "S-shaped curves (plural of a letter)"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "By oneself"
+   ],
+   [
+    2,
+    "Sulks around glumly"
+   ],
+   [
+    3,
+    "Cricket bowling units"
+   ],
+   [
+    4,
+    "Audacity"
+   ],
+   [
+    5,
+    "Shades between black and white (US)"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "A",
+   "M",
+   "O",
+   "N",
+   "G"
+  ],
+  [
+   "L",
+   "O",
+   "V",
+   "E",
+   "R"
+  ],
+  [
+   "O",
+   "P",
+   "E",
+   "R",
+   "A"
+  ],
+  [
+   "N",
+   "E",
+   "R",
+   "V",
+   "Y"
+  ],
+  [
+   "E",
+   "S",
+   "S",
+   "E",
+   "S"
+  ]
+ ]
+}

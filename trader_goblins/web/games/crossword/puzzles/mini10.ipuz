@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #10",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "Support, or a pair"
+   ],
+   [
+    6,
+    "Brand emblems"
+   ],
+   [
+    7,
+    "Highly skilled"
+   ],
+   [
+    8,
+    "Sight or smell, e.g."
+   ],
+   [
+    9,
+    "One who lugs things around"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "Explosion, or a great time"
+   ],
+   [
+    2,
+    "Bull-riding show"
+   ],
+   [
+    3,
+    "Spy, or a star's rep"
+   ],
+   [
+    4,
+    "Small cluster of trees"
+   ],
+   [
+    5,
+    "Fragrant compound in chemistry"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "B",
+   "R",
+   "A",
+   "C",
+   "E"
+  ],
+  [
+   "L",
+   "O",
+   "G",
+   "O",
+   "S"
+  ],
+  [
+   "A",
+   "D",
+   "E",
+   "P",
+   "T"
+  ],
+  [
+   "S",
+   "E",
+   "N",
+   "S",
+   "E"
+  ],
+  [
+   "T",
+   "O",
+   "T",
+   "E",
+   "R"
+  ]
+ ]
+}
