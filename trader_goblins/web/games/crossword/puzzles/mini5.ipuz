@@ -1,0 +1,133 @@
+{
+ "version": "http://ipuz.org/v2",
+ "kind": [
+  "http://ipuz.org/crossword#1"
+ ],
+ "title": "Mini #5",
+ "author": "Made at home ❤",
+ "copyright": "",
+ "dimensions": {
+  "width": 5,
+  "height": 5
+ },
+ "puzzle": [
+  [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   7,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   9,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "clues": {
+  "Across": [
+   [
+    1,
+    "Backbone"
+   ],
+   [
+    6,
+    "Body of accepted works; or a Pachelbel piece"
+   ],
+   [
+    7,
+    "Hand out in portions"
+   ],
+   [
+    8,
+    "Rental agreement"
+   ],
+   [
+    9,
+    "Tumbling laundry machine"
+   ]
+  ],
+  "Down": [
+   [
+    1,
+    "Burn with hot liquid"
+   ],
+   [
+    2,
+    "More washed-out in color"
+   ],
+   [
+    3,
+    "Decorative inset, as in wood"
+   ],
+   [
+    4,
+    "Loop in a lasso"
+   ],
+   [
+    5,
+    "Go in; or the big key on the right"
+   ]
+  ]
+ },
+ "solution": [
+  [
+   "S",
+   "P",
+   "I",
+   "N",
+   "E"
+  ],
+  [
+   "C",
+   "A",
+   "N",
+   "O",
+   "N"
+  ],
+  [
+   "A",
+   "L",
+   "L",
+   "O",
+   "T"
+  ],
+  [
+   "L",
+   "E",
+   "A",
+   "S",
+   "E"
+  ],
+  [
+   "D",
+   "R",
+   "Y",
+   "E",
+   "R"
+  ]
+ ]
+}

@@ -291,10 +291,50 @@
     });
   }
 
+  // ------------------------------------------------- Random / Previous bar
+  function ymd(d) { return d.toISOString().slice(0, 10); }
+  function shiftDay(base, delta) { var d = base ? new Date(base) : new Date(); d.setDate(d.getDate() + delta); return ymd(d); }
+  function randPastDay() { var end = Date.now() - 86400000, start = end - 730 * 86400000; return ymd(new Date(start + Math.random() * (end - start))); }
+  function navTo(qs) { location.href = location.pathname + qs; }
+  function qparam(name) { return new URLSearchParams(location.search).get(name); }
+  function mkbtn(bar, label, title, fn) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "tg-cbtn"; b.textContent = label; b.title = title;
+    b.addEventListener("click", fn); bar.appendChild(b); return b;
+  }
+  function mountControls() {
+    if (!document.body) return;
+    var bar = document.createElement("div"); bar.id = "tg-controls";
+    var today = ymd(new Date());
+    if (GAME === "connections") {
+      var cur = parseInt(qparam("p") || "0", 10) || 0;
+      mkbtn(bar, "◀", "Previous puzzle", function () { navTo("?p=" + (cur - 1)); });
+      mkbtn(bar, "🎲 Random", "Random puzzle", function () { navTo("?p=" + Math.floor(Math.random() * 1000)); });
+      mkbtn(bar, "▶", "Next puzzle", function () { navTo("?p=" + (cur + 1)); });
+      document.body.appendChild(bar);
+    } else if (GAME === "wordle" || GAME === "spellingbee") {
+      var d = qparam("d");
+      mkbtn(bar, "◀", "Previous day", function () { navTo("?d=" + shiftDay(d, -1)); });
+      mkbtn(bar, "🎲 Random", "Random puzzle", function () { navTo("?d=" + randPastDay()); });
+      mkbtn(bar, "▶", "Next day", function () { var nx = shiftDay(d, 1); navTo("?d=" + (nx > today ? today : nx)); });
+      document.body.appendChild(bar);
+    } else if (GAME === "crossword") {
+      fetch("/games/crossword/puzzles/manifest.json").then(function (r) { return r.json(); }).then(function (list) {
+        var files = list.map(function (x) { return "puzzles/" + x.file; });
+        if (!files.length) return;
+        var idx = files.indexOf(qparam("file")); if (idx < 0) idx = 0;
+        mkbtn(bar, "◀", "Previous puzzle", function () { navTo("?file=" + files[(idx - 1 + files.length) % files.length]); });
+        mkbtn(bar, "🎲 Random", "Random puzzle", function () { navTo("?file=" + files[Math.floor(Math.random() * files.length)]); });
+        mkbtn(bar, "▶", "Next puzzle", function () { navTo("?file=" + files[(idx + 1) % files.length]); });
+        document.body.appendChild(bar);
+      }).catch(function () {});
+    }
+  }
+
   // ------------------------------------------------------------- wire up
   startSecretCodes(); startKonami();
   if (GAME) {
-    trackVisit(); startNapWatch(); startScanner(); startCrosswordWatch();
+    trackVisit(); startNapWatch(); startScanner(); startCrosswordWatch(); mountControls();
   }
   if (ON_HUB) {
     function mount() { renderShelf(); bindGoblin(); }

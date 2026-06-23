@@ -68,3 +68,21 @@
 .tg-trophy .tg-tdesc { font-size: 12px; color: var(--tg-muted); margin: 0; }
 .tg-trophy .tg-date { font-size: 10.5px; color: var(--tg-faint); margin: 3px 0 0; }
 #tg-goblin { cursor: pointer; user-select: none; -webkit-user-select: none; }
+
+/* ---------- Random / Previous control bar (in-game) ---------- */
+#tg-controls {
+  position: fixed; left: 12px; bottom: 12px; z-index: 2147482000;
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--tg-bg); border: 1px solid var(--tg-line);
+  border-radius: 11px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  opacity: .55; transition: opacity .15s;
+}
+#tg-controls:hover { opacity: 1; }
+.tg-cbtn {
+  font: 600 12.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--tg-ink); background: var(--tg-surface);
+  border: 1px solid var(--tg-line); border-radius: 8px;
+  padding: 6px 9px; cursor: pointer; white-space: nowrap;
+}
+.tg-cbtn:hover { border-color: var(--tg-accent); color: var(--tg-accent); }
