@@ -76,9 +76,15 @@
   background: var(--tg-bg); border: 1px solid var(--tg-line);
   border-radius: 11px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  opacity: .55; transition: opacity .15s;
+  opacity: .7; transition: opacity .15s;
 }
 #tg-controls:hover { opacity: 1; }
+/* Wordle & Spelling Bee render an on-screen keyboard along the bottom, so dock
+   the controls at the top (near each game's own toggle/calendar) instead. */
+#tg-controls.tg-top {
+  top: 46px; bottom: auto; left: 50%; transform: translateX(-50%); opacity: .95;
+}
+#tg-controls.tg-top.tg-bee { top: 214px; }  /* below Spelling Bee's header/menubar */
 .tg-cbtn {
   font: 600 12.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--tg-ink); background: var(--tg-surface);

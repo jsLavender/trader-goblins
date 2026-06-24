@@ -305,6 +305,9 @@
   function mountControls() {
     if (!document.body) return;
     var bar = document.createElement("div"); bar.id = "tg-controls";
+    // Keyboard games (bottom on-screen keyboard) -> dock the bar at the top.
+    if (GAME === "wordle") bar.className = "tg-top";
+    else if (GAME === "spellingbee") bar.className = "tg-top tg-bee";
     var today = ymd(new Date());
     if (GAME === "connections") {
       var cur = parseInt(qparam("p") || "0", 10) || 0;
