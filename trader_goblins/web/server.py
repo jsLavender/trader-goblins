@@ -29,6 +29,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from .deepdive import build_deepdive
+from .live_account import render_live_account
 
 # Per-IP fixed-window limit on the only expensive route (/api/deepdive). The
 # cache already collapses repeat tickers; this caps a single abuser's fan-out.
@@ -187,7 +188,7 @@ _AUTH_USER = os.environ.get("TG_AUTH_USER", "")
 _AUTH_PASS = os.environ.get("TG_AUTH_PASS", "")
 _AUTH_ENABLED = bool(_AUTH_USER and _AUTH_PASS)
 _AUTH_REALM = "Trader Goblins"
-_PROTECTED_ROUTES = {"/", "/scan"}
+_PROTECTED_ROUTES = {"/", "/scan", "/live"}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -363,8 +364,15 @@ class Handler(BaseHTTPRequestHandler):
             # without one, --public still hides it for an open internet deploy.
             if self.public and not _AUTH_ENABLED:
                 self._redirect("/research")
-            else:
+            elif _DASHBOARD_HTML.exists():
+                # Locally: the full static dashboard export (backtests + live section).
                 self._send_file(_DASHBOARD_HTML, "text/html; charset=utf-8", _LANDING)
+            else:
+                # On the deploy there's no export, so show the live paper account.
+                self._send(200, render_live_account(), "text/html; charset=utf-8")
+        elif route == "/live":
+            # Always the live paper account (reachable even when an export exists).
+            self._send(200, render_live_account(), "text/html; charset=utf-8")
         elif route == "/research":
             self._send_file(_RESEARCH_HTML, "text/html; charset=utf-8",
                             "research.html missing from the install")
