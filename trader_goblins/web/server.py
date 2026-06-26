@@ -18,7 +18,10 @@ EDGAR through the host's IP and get it throttled.
 """
 from __future__ import annotations
 
+import base64
+import hmac
 import json
+import os
 import threading
 import time
 from http.server import BaseHTTPRequestHandler
@@ -54,6 +57,7 @@ _GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
 _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
 _GAMES_PAGE_HTML = Path(__file__).with_name("games.html")  # /games arcade hub
 _GAMES_DIR = Path(__file__).with_name("games").resolve()   # the built word-game bundles
+_SCAN_HTML = Path(__file__).with_name("scan.html")         # /scan webcam card scanner
 
 # Content types for the static game assets (small fixed map — no mimetypes guesswork).
 _GAME_TYPES = {
@@ -150,6 +154,42 @@ _GAMES_HEADERS = {
 }
 
 
+# CSP for the /scan card scanner. It needs the webcam plus two outside services
+# the strict site default forbids: Tesseract.js (loaded from jsDelivr; compiles
+# wasm in a blob: worker and fetches its core + language data) and the Scryfall
+# API/card images. Scoped here so the rest of the site keeps the tight default.
+_SCAN_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        "worker-src 'self' blob:; child-src 'self' blob:; "
+        "img-src 'self' data: blob: https://cards.scryfall.io; "
+        "media-src 'self' blob:; "
+        "connect-src 'self' https://api.scryfall.com https://cdn.jsdelivr.net "
+        "https://tessdata.projectnaptha.com; "
+        "base-uri 'none'; frame-ancestors 'self'"
+    ),
+}
+
+
+# ── Optional Basic-Auth gate for the private routes ─────────────────────────────
+# The dashboard (the real paper-trading account) and the card scanner are gated
+# behind a username/password when TG_AUTH_USER + TG_AUTH_PASS are both set — in the
+# gitignored .env locally, or the host's env vars on Render. Credentials NEVER live
+# in the repo (this is the public résumé repo). Unset => no gate (the --public flag
+# still hides the dashboard for an open deploy). Basic Auth is safe because the
+# deploy is HTTPS; games/research stay open so the household can reach them.
+_AUTH_USER = os.environ.get("TG_AUTH_USER", "")
+_AUTH_PASS = os.environ.get("TG_AUTH_PASS", "")
+_AUTH_ENABLED = bool(_AUTH_USER and _AUTH_PASS)
+_AUTH_REALM = "Trader Goblins"
+_PROTECTED_ROUTES = {"/", "/scan"}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "TraderGoblins"
     sys_version = ""      # suppress the "Python/3.12.x" version disclosure
@@ -176,6 +216,36 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", "0")
         self._security_headers()
         self.end_headers()
+
+    def _authorized(self) -> bool:
+        """True if the request carries valid Basic-Auth credentials (constant-time)."""
+        header = self.headers.get("Authorization", "")
+        if not header.startswith("Basic "):
+            return False
+        try:
+            user, _, pw = base64.b64decode(header[6:]).decode("utf-8").partition(":")
+        except Exception:
+            return False
+        # compare_digest on both fields so a wrong guess leaks nothing via timing.
+        return hmac.compare_digest(user, _AUTH_USER) and hmac.compare_digest(pw, _AUTH_PASS)
+
+    def _send_auth_challenge(self) -> None:
+        body = (
+            "<!doctype html><meta charset='utf-8'><title>Sign in &middot; Trader Goblins</title>"
+            "<body style='font-family:system-ui;max-width:32rem;margin:4rem auto;padding:0 1rem'>"
+            "<h1>&#128122; Trader Goblins</h1>"
+            "<p>This area needs a username and password.</p>"
+            "<p style='color:#888'>The <a href='/games'>games</a> and "
+            "<a href='/research'>research</a> pages are open.</p></body>"
+        ).encode("utf-8")
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", f'Basic realm="{_AUTH_REALM}", charset="UTF-8"')
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self._security_headers()
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def _client_ip(self) -> str:
         # The socket peer is a proxy (Render/Cloudflare), so trust the edge's
@@ -230,6 +300,23 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(data)
 
+    def _serve_scan(self) -> None:
+        """Serve /scan (the webcam card scanner) with the looser scan CSP so the
+        webcam libs + Scryfall work, instead of the strict site default."""
+        try:
+            body = _SCAN_HTML.read_text(encoding="utf-8").encode("utf-8")
+        except FileNotFoundError:
+            self._send(200, "scan.html missing from the install", "text/html; charset=utf-8")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        for name, value in _SCAN_HEADERS.items():
+            self.send_header(name, value)
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
     def _serve_games_asset(self, raw_path: str) -> None:
         """Serve the word-game bundles under /games/*. /games (bare) -> the hub
         page; /games/<game>/ -> that bundle's index.html; everything else a static
@@ -267,14 +354,22 @@ class Handler(BaseHTTPRequestHandler):
             self._serve_games_asset(parsed.path)
             return
         route = parsed.path.rstrip("/") or "/"
+        # Gate the private routes behind Basic Auth when credentials are configured.
+        if _AUTH_ENABLED and route in _PROTECTED_ROUTES and not self._authorized():
+            self._send_auth_challenge()
+            return
         if route == "/":
-            if self.public:                       # hide the account-bearing dashboard
+            # With a login configured we SERVE the dashboard (behind the gate above);
+            # without one, --public still hides it for an open internet deploy.
+            if self.public and not _AUTH_ENABLED:
                 self._redirect("/research")
             else:
                 self._send_file(_DASHBOARD_HTML, "text/html; charset=utf-8", _LANDING)
         elif route == "/research":
             self._send_file(_RESEARCH_HTML, "text/html; charset=utf-8",
                             "research.html missing from the install")
+        elif route == "/scan":
+            self._serve_scan()
         elif route == "/play":
             self._send_file(_GAME_PAGE_HTML, "text/html; charset=utf-8",
                             "game.html missing from the install")

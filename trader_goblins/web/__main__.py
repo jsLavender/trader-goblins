@@ -12,7 +12,7 @@ import threading
 from http.server import ThreadingHTTPServer
 
 from .deepdive import prewarm
-from .server import Handler
+from .server import Handler, _AUTH_ENABLED
 
 
 def _envflag(name: str) -> bool:
@@ -40,6 +40,10 @@ def main() -> None:
     else:
         print(f"Trader Goblins research server  ->  {url}/research")
         print(f"  dashboard at {url}/   ·   Ctrl-C to stop")
+    if _AUTH_ENABLED:
+        print("  auth: ON — dashboard (/) and scanner (/scan) require a username/password")
+    else:
+        print("  auth: off — set TG_AUTH_USER + TG_AUTH_PASS to gate the dashboard + scanner")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

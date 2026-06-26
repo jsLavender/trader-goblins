@@ -1,0 +1,357 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trader Goblins · Card Scanner</title>
+<style>
+ :root{
+  --bg:#faf9f5;--surface:#ffffff;--line:#e9e7df;--ink:#1f1e1b;--muted:#6b6a64;
+  --faint:#9a988f;--accent:#534AB7;--chip:#f1efe8;--good:#2c7a4b;--warn:#b25a00;}
+ @media (prefers-color-scheme:dark){:root{
+  --bg:#1a1916;--surface:#242320;--line:#34322d;--ink:#ecebe6;--muted:#a3a199;
+  --faint:#6f6d65;--accent:#AFA9EC;--chip:#2c2b27;--good:#6cc08a;--warn:#e0a268;}}
+ *{box-sizing:border-box}
+ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);
+  color:var(--ink);max-width:1040px;margin:0 auto;padding:1.5rem 1.25rem 3rem;line-height:1.55}
+ a{color:var(--accent)}
+ .topnav{position:sticky;top:0;z-index:30;background:var(--bg);
+  margin:-1.5rem -1.25rem 1.1rem;padding:.55rem 1.25rem;border-bottom:1px solid var(--line)}
+ .navrow{display:flex;align-items:center;gap:.5rem 1rem;flex-wrap:wrap}
+ .brand{font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+ .tabs{display:flex;gap:.3rem}
+ .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:.32rem .8rem;border-radius:8px;line-height:1}
+ .tab:hover{background:var(--chip);color:var(--ink)}
+ .tab.on{background:var(--accent);color:#fff}
+ h1{font-size:21px;font-weight:600;margin:0 0 .2rem;letter-spacing:-.01em}
+ .sub{color:var(--muted);font-size:13.5px;margin:0 0 1.4rem}
+ .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.3rem;align-items:start}
+ @media (max-width:760px){.layout{grid-template-columns:1fr}}
+ .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.15rem}
+ .stage{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+ video{width:100%;height:100%;object-fit:cover;display:block}
+ .placeholder{color:#cfcdc6;font-size:13.5px;text-align:center;padding:1.5rem}
+ .guide{position:absolute;border:2px dashed rgba(255,255,255,.85);border-radius:4px;
+  box-shadow:0 0 0 2000px rgba(0,0,0,.32);pointer-events:none;display:none}
+ .guide span{position:absolute;top:-1.35rem;left:0;font-size:11px;color:#fff;text-shadow:0 1px 2px #000;letter-spacing:.02em}
+ .controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.85rem}
+ button{font:inherit;font-size:13.5px;font-weight:500;border:1px solid var(--line);background:var(--chip);
+  color:var(--ink);padding:.5rem .95rem;border-radius:9px;cursor:pointer;line-height:1}
+ button:hover:not(:disabled){border-color:var(--accent)}
+ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+ button:disabled{opacity:.5;cursor:default}
+ .status{font-size:12.5px;color:var(--muted);margin-top:.7rem;min-height:1.2em}
+ .status.busy{color:var(--warn)}
+ .status.err{color:#c0392b}
+ .result{display:flex;gap:.9rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line)}
+ .result img{width:96px;border-radius:7px;flex:0 0 auto;background:var(--chip)}
+ .result .meta{min-width:0}
+ .rname{font-size:15px;font-weight:600;margin:0}
+ .rset{font-size:12.5px;color:var(--muted);margin:.15rem 0 .4rem}
+ .price{font-size:14px;font-weight:600;color:var(--good)}
+ .price .foil{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:.5rem}
+ h2{font-size:15px;font-weight:600;margin:0 0 .2rem}
+ .listhead{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+ .listname{font-size:15px;font-weight:600;background:transparent;border:none;
+  border-bottom:1px dashed var(--line);color:var(--ink);font-family:inherit;
+  padding:.15rem .1rem;flex:1;min-width:7rem}
+ .listname:focus{outline:none;border-bottom-color:var(--accent)}
+ .listbtns{display:flex;gap:.4rem;flex:0 0 auto}
+ .listbtns button{font-size:12.5px;padding:.4rem .7rem}
+ .total{font-size:13px;font-weight:600;color:var(--muted);margin:.55rem 0 .1rem}
+ ul.scanned{list-style:none;margin:.6rem 0 0;padding:0;display:flex;flex-direction:column;gap:.4rem}
+ ul.scanned li{display:flex;align-items:center;gap:.65rem;font-size:13px;padding:.4rem .15rem;border-bottom:1px solid var(--line)}
+ ul.scanned li:last-child{border-bottom:none}
+ ul.scanned img{width:30px;border-radius:4px;flex:0 0 auto}
+ .li-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .li-set{color:var(--faint);font-size:11.5px}
+ .li-price{font-weight:600;color:var(--good)}
+ .rm{border:none;background:none;color:var(--faint);font-size:15px;padding:0 .2rem;cursor:pointer}
+ .rm:hover{color:#c0392b}
+ .empty{color:var(--faint);font-size:13px;margin:.6rem 0 0}
+ .foot{color:var(--faint);font-size:12px;margin-top:1.8rem;border-top:1px solid var(--line);padding-top:1rem}
+ .foot code{background:var(--chip);padding:.05rem .3rem;border-radius:4px}
+</style>
+</head><body>
+<nav class="topnav">
+ <div class="navrow">
+  <a class="brand" href="/">&#128122; Trader Goblins</a>
+  <div class="tabs">
+   <a class="tab" href="/">Dashboard</a>
+   <a class="tab" href="/research">Research</a>
+   <a class="tab" href="/games">Games</a>
+   <a class="tab on" href="/scan">Scanner</a>
+  </div>
+ </div>
+</nav>
+
+<h1>&#128247; Card Scanner</h1>
+<p class="sub">Point a <strong>Magic: The Gathering</strong> card at your webcam, line its name up in the box, and scan &mdash; it reads the name, looks the card up, and pulls the live price. Runs entirely in your browser.</p>
+
+<div class="layout">
+
+ <div class="panel">
+  <div class="stage" id="stage">
+   <div class="placeholder" id="placeholder">Camera is off.<br>Tap <strong>Start camera</strong> to begin.</div>
+   <video id="video" playsinline muted style="display:none"></video>
+   <div class="guide" id="guide"><span>line up the card name here</span></div>
+  </div>
+  <div class="controls">
+   <button class="primary" id="startBtn">Start camera</button>
+   <button id="scanBtn" disabled>Scan card</button>
+   <button id="stopBtn" disabled>Stop</button>
+  </div>
+  <div class="status" id="status">Loading the text reader&hellip;</div>
+ </div>
+
+ <div class="panel">
+  <div class="listhead">
+   <input id="listName" class="listname" aria-label="List name" value="Scan list" maxlength="60">
+   <div class="listbtns">
+    <button id="newBtn" title="Clear and start a fresh list">New list</button>
+    <button id="exportBtn" title="Download this list as a CSV">Export CSV</button>
+   </div>
+  </div>
+  <div class="total" id="total"></div>
+  <div id="result"></div>
+  <ul class="scanned" id="scanned"></ul>
+  <p class="empty" id="emptyMsg">Nothing scanned yet.</p>
+ </div>
+
+</div>
+
+<p class="foot">
+ Card data &amp; prices from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a> (fuzzy name match).
+ Text reading by <a href="https://tesseract.projectnaptha.com" target="_blank" rel="noopener">Tesseract.js</a>, running locally.
+ Best results: bright, even light; hold the card steady; fill the box with just the title line. Full-art and old-frame cards read worse &mdash; you can still tweak the match on Scryfall.
+</p>
+
+<canvas id="work" style="display:none"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script>
+(() => {
+  // The title strip sits across the upper-middle of the frame. These fractions
+  // drive BOTH the on-screen guide overlay and the crop fed to OCR, so they stay
+  // in lockstep. (x, y = top-left; w, h as fractions of the video frame.)
+  const GUIDE = { x: 0.08, y: 0.40, w: 0.84, h: 0.15 };
+  const SCALE = 3;            // upscale the crop before OCR — small text reads better big
+
+  const $ = id => document.getElementById(id);
+  const video = $('video'), guide = $('guide'), placeholder = $('placeholder');
+  const startBtn = $('startBtn'), scanBtn = $('scanBtn'), stopBtn = $('stopBtn');
+  const statusEl = $('status'), resultEl = $('result');
+  const scannedEl = $('scanned'), emptyMsg = $('emptyMsg'), totalEl = $('total');
+  const listNameEl = $('listName'), newBtn = $('newBtn'), exportBtn = $('exportBtn');
+  const work = $('work');
+
+  let stream = null, worker = null, scanning = false;
+  const items = [];          // {name, set, collector, usd, foil, img, url, guess}
+
+  // ── the scan list survives a reload (plain localStorage; this page isn't under
+  // /games so there's no key-prefixing to worry about) ────────────────────────
+  const LS_ITEMS = 'tg_scan_items', LS_NAME = 'tg_scan_name';
+  const persist = () => { try { localStorage.setItem(LS_ITEMS, JSON.stringify(items)); localStorage.setItem(LS_NAME, listNameEl.value); } catch (e) {} };
+  function loadSaved() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_ITEMS) || '[]');
+      if (Array.isArray(saved)) items.push(...saved);
+      const nm = localStorage.getItem(LS_NAME); if (nm) listNameEl.value = nm;
+    } catch (e) {}
+  }
+
+  const setStatus = (msg, kind = '') => { statusEl.textContent = msg; statusEl.className = 'status' + (kind ? ' ' + kind : ''); };
+
+  // ── boot the OCR worker up front so the first scan isn't slow ───────────────
+  (async () => {
+    try {
+      worker = await Tesseract.createWorker('eng', 1, {
+        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+        corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5',
+        langPath:   'https://tessdata.projectnaptha.com/4.0.0',
+      });
+      setStatus('Ready. Start the camera when you are.');
+    } catch (e) {
+      setStatus('Could not load the text reader (check your connection).', 'err');
+    }
+  })();
+
+  // ── camera ──────────────────────────────────────────────────────────────────
+  function positionGuide() {
+    // Map the GUIDE fractions onto the displayed video box (object-fit:cover, so
+    // the guide tracks the visible area; the crop below maps the same fractions
+    // onto the intrinsic frame).
+    guide.style.left   = (GUIDE.x * 100) + '%';
+    guide.style.top    = (GUIDE.y * 100) + '%';
+    guide.style.width  = (GUIDE.w * 100) + '%';
+    guide.style.height = (GUIDE.h * 100) + '%';
+    guide.style.display = 'block';
+  }
+
+  startBtn.onclick = async () => {
+    setStatus('Requesting the camera…', 'busy');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } },
+        audio: false,
+      });
+    } catch (e) {
+      setStatus('No camera access — allow it in your browser, then try again.', 'err');
+      return;
+    }
+    video.srcObject = stream;
+    await video.play();
+    placeholder.style.display = 'none';
+    video.style.display = 'block';
+    positionGuide();
+    startBtn.disabled = true; scanBtn.disabled = false; stopBtn.disabled = false;
+    setStatus('Line up a card name in the box and tap Scan.');
+  };
+
+  stopBtn.onclick = () => {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null; video.style.display = 'none'; guide.style.display = 'none';
+    placeholder.style.display = '';
+    startBtn.disabled = false; scanBtn.disabled = true; stopBtn.disabled = true;
+    setStatus('Camera stopped.');
+  };
+
+  // ── scan ──────────────────────────────────────────────────────────────────
+  function cropTitle() {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const sx = GUIDE.x * vw, sy = GUIDE.y * vh, sw = GUIDE.w * vw, sh = GUIDE.h * vh;
+    work.width = Math.round(sw * SCALE);
+    work.height = Math.round(sh * SCALE);
+    const ctx = work.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, work.width, work.height);
+    // Grayscale + a light contrast stretch — cleaner edges for the OCR.
+    const img = ctx.getImageData(0, 0, work.width, work.height), d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      let g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      g = g < 110 ? g * 0.6 : Math.min(255, (g - 110) * 1.7 + 110);
+      d[i] = d[i + 1] = d[i + 2] = g;
+    }
+    ctx.putImageData(img, 0, 0);
+    return work;
+  }
+
+  function cleanText(raw) {
+    // Keep the longest line, strip to name-legal characters, collapse spaces.
+    const line = raw.split('\n').map(s => s.trim()).sort((a, b) => b.length - a.length)[0] || '';
+    return line.replace(/[^A-Za-z',\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  scanBtn.onclick = async () => {
+    if (scanning || !worker || !video.videoWidth) return;
+    scanning = true; scanBtn.disabled = true;
+    try {
+      setStatus('Reading the card name…', 'busy');
+      const canvas = cropTitle();
+      const { data: { text } } = await worker.recognize(canvas);
+      const guess = cleanText(text);
+      if (guess.length < 3) { setStatus('Could not read a name — try better light or a steadier hold.', 'err'); return; }
+
+      setStatus('Looking up “' + guess + '” …', 'busy');
+      const res = await fetch('https://api.scryfall.com/cards/named?fuzzy=' + encodeURIComponent(guess),
+        { headers: { Accept: 'application/json' } });
+      if (res.status === 404) { setStatus('No card matched “' + guess + '”. Reframe and scan again.', 'err'); return; }
+      if (!res.ok) { setStatus('Lookup failed (Scryfall returned ' + res.status + ').', 'err'); return; }
+      const card = await res.json();
+      addCard(card, guess);
+      setStatus('Matched: ' + card.name + '. Scan the next one.');
+    } catch (e) {
+      setStatus('Something went wrong scanning — try again.', 'err');
+    } finally {
+      scanning = false; if (stream) scanBtn.disabled = false;
+    }
+  };
+
+  // ── results ─────────────────────────────────────────────────────────────────
+  function cardImage(card) {
+    const u = card.image_uris || (card.card_faces && card.card_faces[0] && card.card_faces[0].image_uris);
+    return u ? (u.small || u.normal) : '';
+  }
+  const usd = p => (p && p.usd) ? Number(p.usd) : null;
+  const fmt = n => n == null ? '—' : '$' + n.toFixed(2);
+
+  function addCard(card, guess) {
+    const it = {
+      name: card.name,
+      set: (card.set_name || card.set || '').toString(),
+      collector: card.collector_number || '',
+      usd: usd(card.prices),
+      foil: card.prices && card.prices.usd_foil ? Number(card.prices.usd_foil) : null,
+      img: cardImage(card),
+      url: card.scryfall_uri || '',
+      guess,
+    };
+    items.unshift(it);
+    renderResult(it);
+    renderList();
+    persist();
+  }
+
+  function renderResult(it) {
+    resultEl.innerHTML =
+      '<div class="result">' +
+        (it.img ? '<img src="' + it.img + '" alt="">' : '') +
+        '<div class="meta">' +
+          '<p class="rname">' + esc(it.name) + '</p>' +
+          '<p class="rset">' + esc(it.set) + (it.collector ? ' · #' + esc(it.collector) : '') + '</p>' +
+          '<p class="price">' + fmt(it.usd) +
+            (it.foil != null ? '<span class="foil">foil ' + fmt(it.foil) + '</span>' : '') + '</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderList() {
+    scannedEl.innerHTML = items.map((it, i) =>
+      '<li>' +
+        (it.img ? '<img src="' + it.img + '" alt="">' : '') +
+        '<span class="li-name">' + esc(it.name) + ' <span class="li-set">' + esc(it.set) + '</span></span>' +
+        '<span class="li-price">' + fmt(it.usd) + '</span>' +
+        '<button class="rm" data-i="' + i + '" title="Remove">&times;</button>' +
+      '</li>').join('');
+    const sum = items.reduce((s, it) => s + (it.usd || 0), 0);
+    totalEl.textContent = items.length ? items.length + ' card' + (items.length > 1 ? 's' : '') + ' · ' + fmt(sum) : '';
+    emptyMsg.style.display = items.length ? 'none' : '';
+  }
+
+  scannedEl.onclick = e => {
+    const btn = e.target.closest('.rm'); if (!btn) return;
+    items.splice(Number(btn.dataset.i), 1);
+    renderList();
+    if (!items.length) resultEl.innerHTML = '';
+    persist();
+  };
+
+  // ── new list + CSV export ─────────────────────────────────────────────────
+  newBtn.onclick = () => {
+    if (items.length && !confirm('Start a new list? This clears the ' + items.length +
+        ' card' + (items.length > 1 ? 's' : '') + ' below.')) return;
+    items.length = 0; resultEl.innerHTML = ''; renderList(); persist();
+    setStatus('New list started.');
+  };
+
+  const csvCell = v => { v = (v == null ? '' : String(v)); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  exportBtn.onclick = () => {
+    if (!items.length) { setStatus('Nothing to export yet — scan a card first.', 'err'); return; }
+    const head = ['Name', 'Set', 'Collector', 'USD', 'Foil USD', 'Scryfall URL'];
+    const rows = items.map(it => [it.name, it.set, it.collector, it.usd ?? '', it.foil ?? '', it.url]);
+    const csv = [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n');
+    const base = (listNameEl.value.trim() || 'scan-list').replace(/[^\w\-]+/g, '_').slice(0, 50) || 'scan-list';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = base + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    setStatus('Exported ' + items.length + ' card' + (items.length > 1 ? 's' : '') + ' to ' + base + '.csv');
+  };
+  listNameEl.addEventListener('change', persist);
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  window.addEventListener('beforeunload', () => { if (stream) stream.getTracks().forEach(t => t.stop()); });
+
+  // restore any previously-scanned list
+  loadSaved();
+  renderList();
+})();
+</script>
+</body></html>
