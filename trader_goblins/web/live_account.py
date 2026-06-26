@@ -141,12 +141,12 @@ _STYLE = """
 
 _NAV = (
     "<nav class='topnav'><div class='navrow'>"
-    "<a class='brand' href='/'>&#128122; Trader Goblins</a>"
+    "<a class='brand' href='/'>&#128122; John Lavender</a>"
     "<div class='tabs'>"
-    "<a class='tab on' href='/'>Dashboard</a>"
     "<a class='tab' href='/research'>Research</a>"
     "<a class='tab' href='/games'>Games</a>"
     "<a class='tab' href='/scan'>Scanner</a>"
+    "<a class='tab on' href='/dashboard'>Dashboard</a>"
     "</div></div></nav>"
 )
 

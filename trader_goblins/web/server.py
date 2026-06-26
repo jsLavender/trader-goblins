@@ -59,6 +59,8 @@ _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
 _GAMES_PAGE_HTML = Path(__file__).with_name("games.html")  # /games arcade hub
 _GAMES_DIR = Path(__file__).with_name("games").resolve()   # the built word-game bundles
 _SCAN_HTML = Path(__file__).with_name("scan.html")         # /scan webcam card scanner
+_RESUME_HTML = Path(__file__).with_name("resume.html")     # / public resume landing page
+_RESUME_PDF = Path(__file__).with_name("John-Lavender-Resume.pdf")  # /resume.pdf download
 
 # Content types for the static game assets (small fixed map — no mimetypes guesswork).
 _GAME_TYPES = {
@@ -188,7 +190,7 @@ _AUTH_USER = os.environ.get("TG_AUTH_USER", "")
 _AUTH_PASS = os.environ.get("TG_AUTH_PASS", "")
 _AUTH_ENABLED = bool(_AUTH_USER and _AUTH_PASS)
 _AUTH_REALM = "Trader Goblins"
-_PROTECTED_ROUTES = {"/", "/scan", "/live"}
+_PROTECTED_ROUTES = {"/dashboard", "/scan", "/live"}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -318,6 +320,15 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
+    def _serve_pdf(self, path: Path) -> None:
+        """Serve a static PDF (the resume) with the strict site headers."""
+        try:
+            data = path.read_bytes()
+        except FileNotFoundError:
+            self._send(404, "not found", "text/plain; charset=utf-8")
+            return
+        self._send(200, data, "application/pdf")
+
     def _serve_games_asset(self, raw_path: str) -> None:
         """Serve the word-game bundles under /games/*. /games (bare) -> the hub
         page; /games/<game>/ -> that bundle's index.html; everything else a static
@@ -360,19 +371,21 @@ class Handler(BaseHTTPRequestHandler):
             self._send_auth_challenge()
             return
         if route == "/":
-            # With a login configured we SERVE the dashboard (behind the gate above);
-            # without one, --public still hides it for an open internet deploy.
+            # Public front door: John's resume / portfolio landing page.
+            self._send_file(_RESUME_HTML, "text/html; charset=utf-8",
+                            "resume.html missing from the install")
+        elif route == "/resume.pdf":
+            self._serve_pdf(_RESUME_PDF)
+        elif route in ("/dashboard", "/live"):
+            # Private trading dashboard (gated above when auth is on).
             if self.public and not _AUTH_ENABLED:
-                self._redirect("/research")
+                self._redirect("/")          # never expose the account ungated
             elif _DASHBOARD_HTML.exists():
                 # Locally: the full static dashboard export (backtests + live section).
                 self._send_file(_DASHBOARD_HTML, "text/html; charset=utf-8", _LANDING)
             else:
                 # On the deploy there's no export, so show the live paper account.
                 self._send(200, render_live_account(), "text/html; charset=utf-8")
-        elif route == "/live":
-            # Always the live paper account (reachable even when an export exists).
-            self._send(200, render_live_account(), "text/html; charset=utf-8")
         elif route == "/research":
             self._send_file(_RESEARCH_HTML, "text/html; charset=utf-8",
                             "research.html missing from the install")
