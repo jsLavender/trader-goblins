@@ -321,6 +321,12 @@
       mkbtn(bar, "🎲 Random", "Random puzzle", function () { navTo("?d=" + randPastDay()); });
       mkbtn(bar, "▶", "Next day", function () { var nx = shiftDay(d, 1); navTo("?d=" + (nx > today ? today : nx)); });
       document.body.appendChild(bar);
+      // Spelling Bee: shift the whole app down so the docked bar sits above it
+      // (its word-entry line lives just under the header — don't cover it).
+      if (GAME === "spellingbee") {
+        var app = document.getElementById("app");
+        if (app) app.style.marginTop = (bar.offsetHeight + 12) + "px";
+      }
     } else if (GAME === "crossword") {
       fetch("/games/crossword/puzzles/manifest.json").then(function (r) { return r.json(); }).then(function (list) {
         var files = list.map(function (x) { return "puzzles/" + x.file; });

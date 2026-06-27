@@ -84,7 +84,9 @@
 #tg-controls.tg-top {
   top: 46px; bottom: auto; left: 50%; transform: translateX(-50%); opacity: .95;
 }
-#tg-controls.tg-top.tg-bee { top: 214px; }  /* below Spelling Bee's header/menubar */
+/* Spelling Bee: dock at the very top; the JS pushes the game down below it so it
+   never covers the word-entry line (which appears above the hive as you type). */
+#tg-controls.tg-top.tg-bee { top: 6px; }
 .tg-cbtn {
   font: 600 12.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--tg-ink); background: var(--tg-surface);
