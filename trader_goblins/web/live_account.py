@@ -147,6 +147,7 @@ _NAV = (
     "<a class='tab' href='/games'>Games</a>"
     "<a class='tab' href='/scan'>Scanner</a>"
     "<a class='tab on' href='/dashboard'>Dashboard</a>"
+    "<a class='tab' href='/office'>Office</a>"
     "</div></div></nav>"
 )
 

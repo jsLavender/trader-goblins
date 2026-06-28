@@ -54,6 +54,9 @@ _RESEARCH_HTML = Path(__file__).with_name("research.html")
 _OG_IMAGE = Path(__file__).with_name("og.png")        # social link-preview card
 _FAVICON = Path(__file__).with_name("favicon.png")    # tab / bookmark icon
 _DASHBOARD_HTML = _ROOT / "reports" / "dashboard.html"
+_OFFICE_HTML = _ROOT / "reports" / "office.html"
+# Committed copy the public deploy serves (the local reports/ export isn't on Render).
+_OFFICE_PUBLISHED = _ROOT / "trader_goblins" / "web" / "office_published.html"
 _GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
 _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
 _GAMES_PAGE_HTML = Path(__file__).with_name("games.html")  # /games arcade hub
@@ -394,6 +397,12 @@ class Handler(BaseHTTPRequestHandler):
         elif route == "/play":
             self._send_file(_GAME_PAGE_HTML, "text/html; charset=utf-8",
                             "game.html missing from the install")
+        elif route == "/office":
+            # Local: the freshly-built export. On the deploy: the committed published copy.
+            # (Public-safe: serious goblins + SPY only, fake money, no account numbers.)
+            target = _OFFICE_HTML if _OFFICE_HTML.exists() else _OFFICE_PUBLISHED
+            self._send_file(target, "text/html; charset=utf-8",
+                            "No office yet — it publishes after the next market close.")
         elif route == "/api/deepdive":
             if not _rate_ok(self._client_ip()):
                 self._send(429, json.dumps({"error": "rate limited — slow down a moment"}),
