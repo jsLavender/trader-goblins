@@ -220,8 +220,6 @@ function completeStage(s, handoff){
 function openStage(i, handoff){
   const s=STAGES[i];
   stageEl.innerHTML="";
-  if(prog.done[s] && i!==reachedIdx()){ // replaying a finished stage: just show next intro
-  }
   const wrap=el("div","stage");
   stageEl.appendChild(wrap);
   if(handoff){
@@ -556,23 +554,26 @@ function renderFinale(){
   const a=el("a","btn","Back to the arcade"); a.href="/games"; a.style.textDecoration="none";
   row.appendChild(a); f.appendChild(row);
   const rep=el("button","btn ghost","Play again"); rep.style.marginTop=".5rem";
-  rep.onclick=()=>{ prog={day:DAY.id, done:{}}; save(); renderRail(); openStage(0); };
+  rep.onclick=()=>{ prog={slot:prog.slot, done:{}}; save(); renderRail(); openStage(0); };
   f.appendChild(rep);
   stageEl.appendChild(f);
 }
 
 /* ───────────────────────── BOOT ───────────────────────── */
 fetch("pack.json").then(r=>r.json()).then(pack=>{
-  const days=pack.days, qs=new URLSearchParams(location.search);
-  if(qs.get("day")) DAY=days.find(d=>d.id===qs.get("day"))||days[0];           // ?day=<id> override
-  else if(qs.get("n")!=null) DAY=days[((+qs.get("n")%days.length)+days.length)%days.length];
-  else { const epochDays=Math.floor(Date.now()/86400000);                       // rotate daily
-         DAY=days[((epochDays%days.length)+days.length)%days.length]; }
+  const days=pack.days, qs=new URLSearchParams(location.search), wrap=i=>((i%days.length)+days.length)%days.length;
+  // `slot` identifies THIS playthrough so progress resumes within a day but each
+  // calendar day starts fresh — even when a theme recurs (the rotation repeats every
+  // days.length days, so keying on theme id would wrongly show an old finished day).
+  let slot;
+  if(qs.get("day")){ DAY=days.find(d=>d.id===qs.get("day"))||days[0]; slot="day:"+DAY.id; }
+  else if(qs.get("n")!=null){ const idx=wrap(+qs.get("n")); DAY=days[idx]; slot="n:"+idx; }
+  else { const epochDays=Math.floor(Date.now()/86400000); DAY=days[wrap(epochDays)]; slot="date:"+epochDays; }
   document.documentElement.style.setProperty("--accent", DAY.accent||"#5a8a3c");
   $("#hero-em").textContent=DAY.emoji;
   $("#hero-theme").textContent=DAY.theme;
   const saved=load();
-  prog = (saved.day===DAY.id) ? saved : {day:DAY.id, done:{}};
+  prog = (saved.slot===slot) ? saved : {slot, done:{}};
   if(!prog.done) prog.done={};
   save(); renderRail();
   if(STAGES.every(s=>prog.done[s])) renderFinale(); else openStage(reachedIdx());
