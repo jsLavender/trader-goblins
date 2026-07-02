@@ -1,4 +1,4 @@
-"""Trader Goblins — a simulated AI investment research firm (Phase 1)."""
+"""Trader Goblins — a simulated AI investment research firm."""
 import os as _os
 from pathlib import Path as _Path
 
@@ -21,15 +21,10 @@ def _load_dotenv() -> None:
 _load_dotenv()
 
 from .config import Settings, DEFAULT_UNIVERSE
-from .pipeline import run_pipeline
-from .report import render_markdown, save_report
 
 __version__ = "0.1.0"
 
 __all__ = [
     "Settings",
     "DEFAULT_UNIVERSE",
-    "run_pipeline",
-    "render_markdown",
-    "save_report",
 ]

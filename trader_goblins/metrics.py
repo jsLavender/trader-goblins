@@ -1,6 +1,6 @@
 """Pure, deterministic price math. No LLM, no opinions.
 
-This is the firm's single source of numerical truth. The Quant and Risk agents
+This is the firm's single source of numerical truth. The curator lenses
 phrase these numbers; they never invent them.
 """
 from __future__ import annotations
@@ -65,11 +65,3 @@ def compute_metrics(ticker: str, df: pd.DataFrame) -> PriceMetrics:
         above_200d=bool(close.iloc[-1] > ma200),
         rsi_14=_rsi(close),
     )
-
-
-def historical_var(df: pd.DataFrame, confidence: float = 0.95) -> float:
-    """1-day historical Value at Risk as a (negative) return number."""
-    daily_ret = df["close"].astype(float).pct_change().dropna()
-    if daily_ret.empty:
-        return 0.0
-    return float(np.percentile(daily_ret, (1 - confidence) * 100))

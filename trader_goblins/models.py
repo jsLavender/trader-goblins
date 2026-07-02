@@ -1,15 +1,12 @@
-"""Data structures that flow through the pipeline.
+"""Shared data structures.
 
-The whole point of Phase 1 is a *coherent, explainable* research artifact, so
-the Research Packet is the star of the show. Every agent contributes a typed
-piece to it, and the report is just a rendering of this object.
+PriceMetrics is the deterministic fact bundle computed by metrics.compute_metrics
+and read by the curators, traders, and research tools. (The Phase 1 Research
+Packet types that used to live here retired with the old run.py pipeline.)
 """
 from __future__ import annotations
 
-import json
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from dataclasses import dataclass
 
 
 def human_dollars(x: float) -> str:
@@ -47,68 +44,3 @@ class PriceMetrics:
             f"- Above 200-day MA: {'yes' if self.above_200d else 'no'}\n"
             f"- Avg daily $ volume: {human_dollars(self.avg_dollar_volume)}"
         )
-
-
-@dataclass
-class ScannerPick:
-    ticker: str
-    score: float
-    reason: str
-
-
-@dataclass
-class QuantView:
-    ticker: str
-    fair_value_note: str
-    momentum_score: float       # 0-100
-    quality_flags: List[str]
-    summary: str
-
-
-@dataclass
-class RiskView:
-    ticker: str
-    risk_score: float           # 0-100, higher = riskier
-    var_95_1d: float            # 1-day 95% historical VaR (negative number)
-    downside_notes: List[str]
-    position_sizing_hint: str
-
-
-@dataclass
-class Argument:
-    """A Bull or Bear case."""
-
-    stance: str                 # "bull" or "bear"
-    thesis: str
-    key_points: List[str]
-    biggest_risk_to_view: str
-
-
-@dataclass
-class TickerResearch:
-    """Everything the firm thinks about a single ticker."""
-
-    ticker: str
-    metrics: PriceMetrics
-    scanner: ScannerPick
-    quant: QuantView
-    risk: RiskView
-    bull: Argument
-    bear: Argument
-    pm_verdict: str = ""        # synthesized recommendation
-    conviction: float = 0.0     # 0-1
-
-
-@dataclass
-class ResearchPacket:
-    """The deliverable of Phase 1."""
-
-    created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    universe: List[str] = field(default_factory=list)
-    data_source: str = "unknown"
-    llm_source: str = "unknown"
-    candidates: List[TickerResearch] = field(default_factory=list)
-
-    def to_json(self, indent: int = 2) -> str:
-        return json.dumps(asdict(self), indent=indent, default=str)
