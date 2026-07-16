@@ -43,9 +43,10 @@
 
  /* ---------- prompt + stage ---------- */
  #prompt{min-height:64px;flex:none;text-align:center;font-weight:900;font-size:clamp(19px,5.6vw,26px);
-  line-height:1.2;padding:2px 6px;display:flex;align-items:center;justify-content:center;letter-spacing:-.01em}
+  line-height:1.2;padding:2px 6px;display:flex;align-items:center;justify-content:center;letter-spacing:.01em;word-spacing:.08em}
  #prompt .mod{display:inline-block;background:var(--neon2);color:#14040c;border-radius:8px;
-  padding:1px 8px;margin-right:8px;animation:wobble .35s infinite alternate;font-size:.85em}
+  padding:1px 8px;margin-right:12px;animation:wobbleSm .35s infinite alternate;font-size:.85em}
+ @keyframes wobbleSm{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
  @keyframes wobble{from{transform:rotate(-4deg) scale(1.02)}to{transform:rotate(4deg) scale(1.1)}}
  #stage{position:relative;flex:1;min-height:0;border-radius:20px;overflow:hidden;touch-action:none}
  #stage.shake{animation:shake .3s}
@@ -74,7 +75,7 @@
  .halves.lr{grid-template-columns:1fr 1fr}
  .halves.tb{grid-template-rows:1fr 1fr}
  .half{display:flex;align-items:center;justify-content:center;border-radius:20px;font-size:clamp(28px,9vw,46px);
-  font-weight:900;border:2px solid #ffffff22;cursor:pointer}
+  font-weight:900;letter-spacing:.05em;border:2px solid #ffffff22;cursor:pointer}
  .half:active{transform:scale(.97)}
 
  /* odd-one-out grid */
@@ -86,7 +87,7 @@
  /* arrow pads */
  .padwrap{position:absolute;inset:0;display:grid;place-items:center}
  .stim{position:absolute;top:8%;left:0;right:0;text-align:center;font-size:clamp(40px,14vw,72px);font-weight:900}
- .stim small{display:block;font-size:clamp(26px,9vw,44px)}
+ .stim small{display:block;font-size:clamp(26px,9vw,44px);letter-spacing:.06em}
  .dpad{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);display:grid;
   grid-template-columns:repeat(3,minmax(64px,22vw));grid-template-rows:repeat(2,minmax(56px,11vh));gap:10px}
  .dbtn{display:flex;align-items:center;justify-content:center;font-size:30px;border-radius:16px;
@@ -371,6 +372,19 @@ stage.addEventListener("pointerdown",e=>{
 
 /* =================== generators =================== */
 const EMOJI=["🦄","🌮","🐸","🚀","🍕","👾","🐙","🌵","🎩","🧀","🦖","🍩","⚡","🎲","🐝","🍄","🤖","🌈","🎸","🥑"];
+
+/* jittered-grid placement: one item per cell so scattered emoji never stack */
+function spots(count,tTop,tBot){
+  const cols=Math.ceil(Math.sqrt(count))+1;
+  const rows=Math.ceil(count/cols);
+  const cells=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)cells.push([c,r]);
+  const cw=92/cols, ch=(tBot-tTop)/rows;
+  return shuffle(cells).slice(0,count).map(([c,r])=>({
+    l:2+c*cw+Math.random()*Math.max(0,cw-9),
+    t:tTop+r*ch+Math.random()*Math.max(0,ch-8)
+  }));
+}
 const COLORS=[["RED","#ff4d5e"],["BLUE","#3d8bff"],["GREEN","#3dff9a"],["YELLOW","#ffd23d"],["PINK","#ff7ad9"],["PURPLE","#a86bff"]];
 
 function makeTap(){
@@ -378,14 +392,15 @@ function makeTap(){
   const items=shuffle(EMOJI).slice(0,8);
   const target=items[0];
   return {prompt:"Tap the "+target, ttl:ttl(4200), build(s){
+    const pos=spots(n,3,86);
     for(let i=0;i<n;i++){
       const d=document.createElement("div"); d.className="scat";
       const isT=i===0;
       d.textContent=isT?target:pick(items.slice(1));
       d.dataset.r=isT?"1":"0";
       if(isT)d.style.zIndex="2"; // never buried under the swarm
-      d.style.fontSize=(26+rnd(16))+"px";
-      d.style.left=(3+rnd(82))+"%"; d.style.top=(3+rnd(84))+"%";
+      d.style.fontSize=(26+rnd(14))+"px";
+      d.style.left=pos[i].l+"%"; d.style.top=pos[i].t+"%";
       d.style.animationDelay=(-Math.random()*1.6)+"s";
       s.appendChild(d);
     }
@@ -423,7 +438,7 @@ function makeOpposite(){
   const flip=level>=2&&Math.random()<.45;
   const correct=flip?dirs.find(d=>d!==said):said;
   return {
-    prompt:(flip?'<span class="mod">🙃 OPPOSITE!</span>':"")+"Tap "+said,
+    prompt:(flip?'<span class="mod">🙃 OPPOSITE!</span> ':"")+"Tap "+said,
     ttl:ttl(3400),
     build(s){
       const h=document.createElement("div"); h.className="halves "+(lr?"lr":"tb");
@@ -502,11 +517,12 @@ function makeCount(){
   const deco=3+rnd(4);
   const opts=new Set([n]); while(opts.size<4){const v=n+pick([1,-1,2,-2]); if(v>0)opts.add(v);}
   return {prompt:"How many "+t+"?", ttl:ttl(5200), build(s){
+    const pos=spots(n+deco,2,54);
     for(let i=0;i<n+deco;i++){
       const e=document.createElement("div"); e.className="scat";
       e.textContent=i<n?t:d;
-      e.style.fontSize=(28+rnd(12))+"px";
-      e.style.left=(4+rnd(78))+"%"; e.style.top=(2+rnd(58))+"%";
+      e.style.fontSize=(28+rnd(10))+"px";
+      e.style.left=pos[i].l+"%"; e.style.top=pos[i].t+"%";
       e.style.animationDelay=(-Math.random()*1.6)+"s";
       s.appendChild(e);
     }
