@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>FRENZY</title>
+<style>
+ :root{
+  --bg:#0c0b14;--panel:#17162399;--ink:#f4f2ff;--muted:#8f8ba8;
+  --neon1:#00e5ff;--neon2:#ff3d81;--neon3:#b6ff3d;--neon4:#ffd23d;--neon5:#a86bff;
+  --good:#3dff9a;--bad:#ff4d5e;
+ }
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+ body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
+  background:
+   radial-gradient(1200px 700px at 80% -10%, #2a1b4d55, transparent 60%),
+   radial-gradient(900px 600px at -10% 110%, #0b3b4d66, transparent 60%),
+   var(--bg);
+  touch-action:manipulation;
+ }
+ #app{position:fixed;inset:0;display:flex;flex-direction:column;max-width:640px;margin:0 auto;
+  padding:max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom))}
+
+ /* ---------- HUD ---------- */
+ #hud{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 6px}
+ .pill{background:var(--panel);border:1px solid #ffffff1c;border-radius:999px;
+  padding:6px 14px;font-weight:800;font-variant-numeric:tabular-nums;backdrop-filter:blur(6px)}
+ #timePill{font-size:20px;min-width:96px;text-align:center;letter-spacing:.02em}
+ #timePill.low{color:var(--bad);animation:pulseRed .5s infinite alternate}
+ @keyframes pulseRed{from{transform:scale(1)}to{transform:scale(1.12);text-shadow:0 0 18px var(--bad)}}
+ #scorePill{font-size:16px;color:var(--neon4)}
+ #comboPill{font-size:15px;color:var(--neon2);transition:transform .12s}
+ #comboPill.hot{color:var(--neon3);text-shadow:0 0 12px var(--neon3)}
+ #comboPill.bump{transform:scale(1.35) rotate(-4deg)}
+
+ /* per-challenge timer bar */
+ #cbar{height:10px;border-radius:999px;background:#ffffff14;overflow:hidden;margin:0 2px 8px;flex:none}
+ #cfill{height:100%;width:100%;transform-origin:left;border-radius:999px;
+  background:linear-gradient(90deg,var(--neon1),var(--neon5),var(--neon2));
+  box-shadow:0 0 14px #00e5ff88}
+
+ /* ---------- prompt + stage ---------- */
+ #prompt{min-height:64px;flex:none;text-align:center;font-weight:900;font-size:clamp(19px,5.6vw,26px);
+  line-height:1.2;padding:2px 6px;display:flex;align-items:center;justify-content:center;letter-spacing:-.01em}
+ #prompt .mod{display:inline-block;background:var(--neon2);color:#14040c;border-radius:8px;
+  padding:1px 8px;margin-right:8px;animation:wobble .35s infinite alternate;font-size:.85em}
+ @keyframes wobble{from{transform:rotate(-4deg) scale(1.02)}to{transform:rotate(4deg) scale(1.1)}}
+ #stage{position:relative;flex:1;min-height:0;border-radius:20px;overflow:hidden;touch-action:none}
+ #stage.shake{animation:shake .3s}
+ @keyframes shake{
+  10%{transform:translate(-8px,3px) rotate(-1deg)}30%{transform:translate(7px,-5px) rotate(1deg)}
+  50%{transform:translate(-6px,-3px)}70%{transform:translate(5px,4px) rotate(1deg)}90%{transform:translate(-3px,1px)}}
+
+ /* answer chips (grid) */
+ .grid2{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+ .grid1{position:absolute;inset:0;display:grid;grid-template-columns:1fr;gap:12px;padding:12px}
+ .chip{display:flex;align-items:center;justify-content:center;text-align:center;border-radius:18px;
+  font-size:clamp(22px,6.5vw,34px);font-weight:900;cursor:pointer;border:2px solid #ffffff22;
+  background:linear-gradient(180deg,#ffffff12,#ffffff05);padding:8px;line-height:1.15;
+  transition:transform .08s}
+ .chip:active{transform:scale(.94)}
+ .chip.small{font-size:clamp(16px,4.6vw,22px);font-weight:800}
+ .chip.word{letter-spacing:.03em}
+
+ /* scatter items */
+ .scat{position:absolute;cursor:pointer;line-height:1;filter:drop-shadow(0 2px 6px #0008);
+  animation:bob 1.6s ease-in-out infinite alternate}
+ @keyframes bob{from{transform:translateY(-3px) rotate(-5deg)}to{transform:translateY(3px) rotate(5deg)}}
+
+ /* halves (opposite) */
+ .halves{position:absolute;inset:0;display:grid;gap:12px;padding:12px}
+ .halves.lr{grid-template-columns:1fr 1fr}
+ .halves.tb{grid-template-rows:1fr 1fr}
+ .half{display:flex;align-items:center;justify-content:center;border-radius:20px;font-size:clamp(28px,9vw,46px);
+  font-weight:900;border:2px solid #ffffff22;cursor:pointer}
+ .half:active{transform:scale(.97)}
+
+ /* odd-one-out grid */
+ .ogrid{position:absolute;inset:0;display:grid;gap:8px;padding:14px;place-items:center}
+ .ocell{display:flex;align-items:center;justify-content:center;width:100%;height:100%;
+  font-size:clamp(26px,8vw,44px);cursor:pointer;border-radius:14px}
+ .ocell:active{transform:scale(.9)}
+
+ /* arrow pads */
+ .padwrap{position:absolute;inset:0;display:grid;place-items:center}
+ .stim{position:absolute;top:8%;left:0;right:0;text-align:center;font-size:clamp(40px,14vw,72px);font-weight:900}
+ .stim small{display:block;font-size:clamp(26px,9vw,44px)}
+ .dpad{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);display:grid;
+  grid-template-columns:repeat(3,minmax(64px,22vw));grid-template-rows:repeat(2,minmax(56px,11vh));gap:10px}
+ .dbtn{display:flex;align-items:center;justify-content:center;font-size:30px;border-radius:16px;
+  background:#ffffff12;border:2px solid #ffffff22;cursor:pointer}
+ .dbtn:active{transform:scale(.92)}
+
+ /* don't-touch button */
+ .bigbait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+ .bait{width:min(64vw,300px);height:min(64vw,300px);border-radius:50%;border:none;cursor:pointer;
+  font-size:clamp(22px,6vw,30px);font-weight:900;color:#2b0a12;
+  background:radial-gradient(circle at 35% 30%,#ff8fb3,var(--neon2));
+  box-shadow:0 0 40px #ff3d8188,0 0 90px #ff3d8144;animation:tempt .5s infinite alternate}
+ @keyframes tempt{from{transform:scale(1)}to{transform:scale(1.07)}}
+
+ /* memory flash row */
+ .memrow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5vw;
+  font-size:clamp(44px,15vw,80px)}
+
+ /* feedback flashes */
+ #flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:40}
+ #flash.good{background:radial-gradient(circle,#3dff9a33,#3dff9a11 60%,transparent);animation:ff .3s}
+ #flash.bad{background:radial-gradient(circle,#ff4d5e55,#ff4d5e22 60%,transparent);animation:ff .35s}
+ @keyframes ff{from{opacity:1}to{opacity:0}}
+
+ /* fever mode */
+ body.fever{animation:feverbg 1.2s linear infinite}
+ @keyframes feverbg{
+  0%{background-color:#1a0b2e}25%{background-color:#0b2e2a}50%{background-color:#2e0b1c}
+  75%{background-color:#2c2e0b}100%{background-color:#1a0b2e}}
+ body.fever #cfill{background:linear-gradient(90deg,#ff3d81,#ffd23d,#3dff9a,#00e5ff);box-shadow:0 0 20px #ffd23d}
+ #feverTag{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:35;display:none;
+  font-weight:900;font-size:15px;letter-spacing:.24em;color:#ffd23d;text-shadow:0 0 16px #ffd23d}
+ body.fever #feverTag{display:block;animation:wobble .3s infinite alternate}
+
+ /* fx layer */
+ #fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+ .pop{position:absolute;font-weight:900;font-size:24px;transform:translate(-50%,-50%);
+  animation:popup .8s ease-out forwards;text-shadow:0 2px 10px #000a;white-space:nowrap}
+ @keyframes popup{
+  0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}
+  20%{opacity:1;transform:translate(-50%,-60%) scale(1.25)}
+  100%{opacity:0;transform:translate(-50%,-170%) scale(1)}}
+ .part{position:absolute;width:10px;height:10px;border-radius:2px;
+  animation:fly .7s ease-out forwards}
+ @keyframes fly{
+  from{opacity:1;transform:translate(0,0) rotate(0)}
+  to{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(540deg)}}
+
+ /* ---------- screens ---------- */
+ .screen{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;text-align:center;padding:20px;background:#0c0b14ee;backdrop-filter:blur(8px)}
+ .screen.hide{display:none}
+ .logo{font-size:clamp(52px,16vw,86px);font-weight:900;letter-spacing:-.03em;line-height:1;margin:0;
+  background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon4));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 24px #ff3d8166);animation:logoP 1.4s ease-in-out infinite alternate}
+ @keyframes logoP{from{transform:scale(1) rotate(-1deg)}to{transform:scale(1.05) rotate(1deg)}}
+ .tag{color:var(--muted);font-size:15px;max-width:340px;margin:0}
+ .bigbtn{font:inherit;font-size:24px;font-weight:900;border:none;border-radius:999px;cursor:pointer;
+  padding:16px 54px;color:#06131a;background:linear-gradient(90deg,var(--neon1),var(--neon3));
+  box-shadow:0 0 30px #00e5ff66;letter-spacing:.06em}
+ .bigbtn:active{transform:scale(.95)}
+ .ghostbtn{font:inherit;font-size:14px;font-weight:700;border-radius:999px;cursor:pointer;
+  padding:9px 20px;color:var(--ink);background:#ffffff10;border:1px solid #ffffff26;text-decoration:none}
+ .beststrip{font-size:14px;color:var(--neon4);font-weight:800}
+ .rowbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+
+ /* countdown */
+ #count{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;pointer-events:none}
+ #count span{font-size:clamp(110px,38vw,220px);font-weight:900;
+  background:linear-gradient(180deg,var(--neon4),var(--neon2));-webkit-background-clip:text;background-clip:text;
+  color:transparent;animation:cd .82s ease-in forwards}
+ @keyframes cd{0%{opacity:0;transform:scale(2.4)}25%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(.6)}}
+
+ /* game-over stats */
+ .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;font-size:15px;color:var(--muted)}
+ .stats b{color:var(--ink);font-size:19px;font-variant-numeric:tabular-nums}
+ #finalScore{font-size:clamp(56px,18vw,92px);font-weight:900;line-height:1;margin:0;color:var(--neon4);
+  text-shadow:0 0 30px #ffd23d66;font-variant-numeric:tabular-nums}
+ #rank{font-size:20px;font-weight:900;margin:0;color:var(--neon1)}
+ #newbest{display:none;font-weight:900;color:var(--good);font-size:17px;letter-spacing:.1em;
+  animation:wobble .4s infinite alternate}
+</style>
+</head>
+<body>
+
+<div id="app">
+ <div id="hud">
+  <div class="pill" id="scorePill">0</div>
+  <div class="pill" id="timePill">45.0</div>
+  <div class="pill" id="comboPill">×1</div>
+ </div>
+ <div id="cbar"><div id="cfill"></div></div>
+ <div id="prompt"></div>
+ <div id="stage"></div>
+</div>
+
+<div id="feverTag">🔥 FEVER ×2 🔥</div>
+<div id="flash"></div>
+<div id="fx"></div>
+<div id="count"></div>
+
+<div class="screen" id="startScr">
+ <h1 class="logo">FRENZY</h1>
+ <p class="tag">Rapid-fire chaos. Tap fast, read faster — the rules change every three seconds. Right answers add time, wrong ones eat it.</p>
+ <div class="beststrip" id="bestLine"></div>
+ <button class="bigbtn" id="playBtn">PLAY</button>
+ <div class="rowbtns">
+  <button class="ghostbtn" id="muteBtn">🔊 sound on</button>
+  <a class="ghostbtn" href="/games">← arcade</a>
+ </div>
+</div>
+
+<div class="screen hide" id="overScr">
+ <p id="rank"></p>
+ <p id="finalScore">0</p>
+ <div id="newbest">★ NEW BEST ★</div>
+ <div class="stats">
+  <span>best combo <b id="stCombo">0</b></span>
+  <span>correct <b id="stRight">0</b></span>
+  <span>accuracy <b id="stAcc">0%</b></span>
+  <span>missed <b id="stWrong">0</b></span>
+ </div>
+ <button class="bigbtn" id="againBtn">AGAIN!</button>
+ <div class="rowbtns">
+  <button class="ghostbtn" id="muteBtn2">🔊</button>
+  <a class="ghostbtn" href="/games">← arcade</a>
+ </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* =================== helpers =================== */
+const $ = id => document.getElementById(id);
+const stage=$("stage"), promptEl=$("prompt"), cfill=$("cfill"), fx=$("fx");
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* =================== audio =================== */
+let AC=null, muted = localStorage.getItem("frz_muted")==="1";
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==="suspended")AC.resume(); return AC; }
+function tone(f,dur,type,vol,delay){
+  if(muted)return; const c=ac(); if(!c)return;
+  const t=c.currentTime+(delay||0), o=c.createOscillator(), g=c.createGain();
+  o.type=type||"square"; o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol||.12,t+.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+.05);
+}
+const PENT=[0,2,4,7,9];
+function sCorrect(streak){
+  const step=PENT[streak%5]+12*Math.floor((streak%15)/5);
+  const f=440*Math.pow(2,step/12);
+  tone(f,.09,"square",.09); tone(f*1.5,.12,"square",.07,.06);
+}
+function sWrong(){ tone(140,.2,"sawtooth",.12); tone(96,.28,"sawtooth",.1,.05); }
+function sTick(){ tone(1100,.04,"square",.05); }
+function sGo(){ tone(660,.1,"triangle",.12); tone(990,.18,"triangle",.12,.1); }
+function sCount(){ tone(440,.1,"triangle",.1); }
+function sFever(){ [660,830,990,1320].forEach((f,i)=>tone(f,.1,"square",.09,i*.07)); }
+function sOver(){ [520,392,330,262].forEach((f,i)=>tone(f,.22,"triangle",.11,i*.14)); }
+
+/* =================== state =================== */
+const START_MS=45000, CAP_MS=60000, GAIN_MS=1200, LOSS_MS=3000;
+let state="idle";          // idle | count | play | over
+let timeLeft=0, lastTick=0, rafId=0;
+let score=0, streak=0, bestCombo=0, right=0, wrong=0, level=1;
+let locked=true, holdActive=false, timeoutWins=false, challengeT0=0, challengeMs=1, chTimer=0, gapTimer=0;
+let pauseMode=null, pausedRemain=0;
+let lastGen="", prevGen="";
+let best=+(localStorage.getItem("frz_best")||0);
+
+function mult(){ return clamp(1+Math.floor(streak/3),1,8); }
+function fever(){ return streak>=10; }
+
+/* =================== hud / fx =================== */
+function updHud(){
+  $("scorePill").textContent=score.toLocaleString();
+  const s=Math.max(0,timeLeft/1000);
+  $("timePill").textContent=s.toFixed(1);
+  $("timePill").classList.toggle("low",s<=5);
+  const c=$("comboPill");
+  c.textContent="×"+mult()+(streak>=3?" 🔥":"");
+  c.classList.toggle("hot",fever());
+}
+function bumpCombo(){ const c=$("comboPill"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
+function flash(kind){ const f=$("flash"); f.className=""; void f.offsetWidth; f.className=kind; }
+function shake(){ stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake"); }
+function popText(x,y,txt,color){
+  const p=document.createElement("div"); p.className="pop"; p.textContent=txt;
+  p.style.left=x+"px"; p.style.top=y+"px"; p.style.color=color||"#fff";
+  fx.appendChild(p); setTimeout(()=>p.remove(),850);
+}
+const PCOLORS=["#00e5ff","#ff3d81","#b6ff3d","#ffd23d","#a86bff","#3dff9a"];
+function burst(x,y,n){
+  for(let i=0;i<n;i++){
+    const s=document.createElement("div"); s.className="part";
+    const ang=Math.random()*Math.PI*2, d=40+Math.random()*110;
+    s.style.setProperty("--dx",Math.cos(ang)*d+"px");
+    s.style.setProperty("--dy",Math.sin(ang)*d-40+"px");
+    s.style.left=x+"px"; s.style.top=y+"px";
+    s.style.background=pick(PCOLORS);
+    s.style.width=s.style.height=(6+rnd(8))+"px";
+    fx.appendChild(s); setTimeout(()=>s.remove(),750);
+  }
+}
+const HYPE=["NICE!","YES!","ZOOM!","BIG BRAIN!","CLEAN!","SPICY!","GOBLIN MODE!","UNREAL!","CRACKED!","LOCKED IN!"];
+
+/* =================== game clock =================== */
+let lowTickSec=-1;
+function loop(ts){
+  if(state!=="play"){ return; }
+  if(lastTick){ timeLeft-=ts-lastTick; }
+  lastTick=ts;
+  if(timeLeft<=0){ timeLeft=0; updHud(); gameOver(); return; }
+  const s=Math.ceil(timeLeft/1000);
+  if(s<=5&&s!==lowTickSec){ lowTickSec=s; sTick(); }
+  updHud();
+  rafId=requestAnimationFrame(loop);
+}
+
+/* =================== challenge engine =================== */
+function ttl(base){ return Math.max(2100, base-(level-1)*420); }
+function armBar(ms){
+  if(document.hidden){ // tab hidden: hold the challenge instead of letting it silently time out
+    clearTimeout(chTimer); locked=true; pauseMode="ch"; pausedRemain=ms; return;
+  }
+  challengeT0=performance.now(); challengeMs=ms;
+  cfill.style.transition="none"; cfill.style.transform="scaleX(1)";
+  void cfill.offsetWidth;
+  cfill.style.transition="transform "+ms+"ms linear"; cfill.style.transform="scaleX(0)";
+  clearTimeout(chTimer);
+  chTimer=setTimeout(()=>resolve(timeoutWins,{timeout:true}),ms);
+  locked=false;
+}
+function centerXY(el){
+  const r=(el||stage).getBoundingClientRect();
+  return [r.left+r.width/2, r.top+r.height/2];
+}
+function resolve(ok,opts){
+  if(locked||state!=="play")return;
+  locked=true; holdActive=false;
+  clearTimeout(chTimer);
+  cfill.style.transition="none";
+  const [x,y]=opts&&opts.el?centerXY(opts.el):centerXY(null);
+  if(ok){
+    right++; streak++; bestCombo=Math.max(bestCombo,streak);
+    const wasFever=document.body.classList.contains("fever");
+    const frac=opts&&opts.timeout?0:clamp(1-(performance.now()-challengeT0)/challengeMs,0,1);
+    let pts=Math.round((100+60*frac)*mult()); if(fever())pts*=2;
+    score+=pts;
+    timeLeft=Math.min(CAP_MS,timeLeft+GAIN_MS);
+    level=clamp(1+Math.floor(right/6),1,6);
+    sCorrect(streak); flash("good"); burst(x,y,fever()?26:14);
+    popText(x,y-8,"+"+pts,"#ffd23d");
+    if(streak>0&&streak%4===0)popText(x,y-52,pick(HYPE),"#00e5ff");
+    if(fever()&&!wasFever){ document.body.classList.add("fever"); sFever(); popText(innerWidth/2,140,"🔥 FEVER MODE 🔥","#ffd23d"); }
+    bumpCombo();
+  }else{
+    wrong++; streak=0; document.body.classList.remove("fever");
+    timeLeft=Math.max(0,timeLeft-LOSS_MS);
+    sWrong(); flash("bad"); shake();
+    popText(x,y-8,opts&&opts.timeout?"TOO SLOW!":"-"+(LOSS_MS/1000|0)+"s","#ff4d5e");
+  }
+  updHud();
+  if(timeLeft<=0){ gameOver(); return; }
+  gapTimer=setTimeout(nextChallenge, ok?380:560);
+}
+
+stage.addEventListener("pointerdown",e=>{
+  if(state!=="play"||locked)return;
+  if(holdActive){ resolve(false,{el:e.target.closest("[data-r]")||undefined}); return; }
+  const t=e.target.closest("[data-r]");
+  if(!t)return;
+  resolve(t.dataset.r==="1",{el:t});
+},{passive:true});
+
+/* =================== generators =================== */
+const EMOJI=["🦄","🌮","🐸","🚀","🍕","👾","🐙","🌵","🎩","🧀","🦖","🍩","⚡","🎲","🐝","🍄","🤖","🌈","🎸","🥑"];
+const COLORS=[["RED","#ff4d5e"],["BLUE","#3d8bff"],["GREEN","#3dff9a"],["YELLOW","#ffd23d"],["PINK","#ff7ad9"],["PURPLE","#a86bff"]];
+
+function makeTap(){
+  const n=8+level*2;
+  const items=shuffle(EMOJI).slice(0,5);
+  const target=items[0];
+  return {prompt:"Tap the "+target, ttl:ttl(4200), build(s){
+    for(let i=0;i<n;i++){
+      const d=document.createElement("div"); d.className="scat";
+      const isT=i===0;
+      d.textContent=isT?target:pick(items.slice(1));
+      d.dataset.r=isT?"1":"0";
+      d.style.fontSize=(30+rnd(16))+"px";
+      d.style.left=(4+rnd(78))+"%"; d.style.top=(4+rnd(80))+"%";
+      d.style.animationDelay=(-Math.random()*1.6)+"s";
+      s.appendChild(d);
+    }
+  }};
+}
+
+function makeStroop(){
+  const cs=shuffle(COLORS).slice(0,4);
+  const byWord=Math.random()<.5;
+  // derangement of inks so no chip's ink matches its own word
+  let inks;
+  do{ inks=shuffle(cs); }while(inks.some((c,i)=>c[0]===cs[i][0]));
+  const k=rnd(4);
+  const targetName = byWord? cs[k][0] : inks[k][0];
+  return {
+    prompt: byWord? 'Tap the word that <u>SAYS</u> '+targetName
+                  : 'Tap the word <u>COLORED</u> '+targetName.toLowerCase(),
+    ttl:ttl(4600),
+    build(s){
+      const g=document.createElement("div"); g.className="grid2";
+      shuffle(cs.map((c,i)=>({word:c[0],ink:inks[i][1],ok:i===k}))).forEach(o=>{
+        const b=document.createElement("div"); b.className="chip word";
+        b.textContent=o.word; b.style.color=o.ink; b.dataset.r=o.ok?"1":"0";
+        g.appendChild(b);
+      });
+      s.appendChild(g);
+    }
+  };
+}
+
+function makeOpposite(){
+  const lr=Math.random()<.6;
+  const dirs=lr?["LEFT","RIGHT"]:["TOP","BOTTOM"];
+  const said=pick(dirs);
+  const flip=level>=2&&Math.random()<.45;
+  const correct=flip?dirs.find(d=>d!==said):said;
+  return {
+    prompt:(flip?'<span class="mod">🙃 OPPOSITE!</span>':"")+"Tap "+said,
+    ttl:ttl(3400),
+    build(s){
+      const h=document.createElement("div"); h.className="halves "+(lr?"lr":"tb");
+      dirs.forEach((d,i)=>{
+        const b=document.createElement("div"); b.className="half";
+        b.textContent=d; b.dataset.r=d===correct?"1":"0";
+        b.style.background=["#00e5ff1c","#ff3d811c"][i];
+        h.appendChild(b);
+      });
+      s.appendChild(h);
+    }
+  };
+}
+
+function makeDontTap(){
+  const cs=shuffle(COLORS).slice(0,6);
+  const bad=cs[0];
+  return {prompt:"Tap anything <u>EXCEPT</u> "+bad[0].toLowerCase(), ttl:ttl(3600), build(s){
+    const g=document.createElement("div"); g.className="grid2";
+    shuffle(cs).forEach(c=>{
+      const b=document.createElement("div"); b.className="chip";
+      b.style.background=c[1]; b.style.color="#111"; b.textContent="";
+      b.dataset.r=c[0]===bad[0]?"0":"1";
+      g.appendChild(b);
+    });
+    s.appendChild(g);
+  }};
+}
+
+function makeHoldStill(){
+  return {prompt:"🚫 DON'T TOUCH ANYTHING", ttl:2500, fixed:true, timeoutWins:true, hold:true, build(s){
+    const w=document.createElement("div"); w.className="bigbait";
+    const b=document.createElement("button"); b.className="bait"; b.textContent="TAP ME!!";
+    w.appendChild(b); s.appendChild(w);
+  }};
+}
+
+function makeMath(){
+  let a,b,op,ans;
+  if(level<2){ op=pick(["+","−"]); a=2+rnd(11); b=2+rnd(11); if(op==="−"&&b>a)[a,b]=[b,a]; }
+  else if(level<4){ op=pick(["+","−","×"]); a=op==="×"?2+rnd(8):5+rnd(20); b=op==="×"?2+rnd(8):2+rnd(15); if(op==="−"&&b>a)[a,b]=[b,a]; }
+  else{ op=pick(["+","×"]); a=op==="×"?3+rnd(10):11+rnd(50); b=op==="×"?3+rnd(9):11+rnd(50); }
+  ans=op==="+"?a+b:op==="−"?a-b:a*b;
+  const opts=new Set([ans]);
+  while(opts.size<4){ const d=pick([1,-1,2,-2,10,-10,ans>20?5:3]); const v=ans+d; if(v>=0)opts.add(v); }
+  return {prompt:a+" "+op+" "+b+" = ?", ttl:ttl(4400), build(s){
+    const g=document.createElement("div"); g.className="grid2";
+    shuffle([...opts]).forEach(v=>{
+      const c=document.createElement("div"); c.className="chip"; c.textContent=v;
+      c.dataset.r=v===ans?"1":"0"; g.appendChild(c);
+    });
+    s.appendChild(g);
+  }};
+}
+
+function makeBigNum(){
+  const wantBig=Math.random()<.5;
+  const nums=new Set(); while(nums.size<4)nums.add(10+rnd(level<3?89:989));
+  const arr=[...nums], target=wantBig?Math.max(...arr):Math.min(...arr);
+  return {prompt:"Tap the <u>"+(wantBig?"BIGGEST":"SMALLEST")+"</u> number", ttl:ttl(3800), build(s){
+    const g=document.createElement("div"); g.className="grid2";
+    // adversarial font sizes: big values often drawn small and vice versa
+    shuffle(arr).forEach(v=>{
+      const c=document.createElement("div"); c.className="chip"; c.textContent=v;
+      c.dataset.r=v===target?"1":"0";
+      c.style.fontSize=(20+rnd(28))+"px";
+      g.appendChild(c);
+    });
+    s.appendChild(g);
+  }};
+}
+
+function makeCount(){
+  const t=pick(EMOJI); let d=pick(EMOJI); while(d===t)d=pick(EMOJI);
+  const n=4+rnd(4)+ (level>=4?2:0);
+  const deco=3+rnd(4);
+  const opts=new Set([n]); while(opts.size<4){const v=n+pick([1,-1,2,-2]); if(v>0)opts.add(v);}
+  return {prompt:"How many "+t+"?", ttl:ttl(5200), build(s){
+    for(let i=0;i<n+deco;i++){
+      const e=document.createElement("div"); e.className="scat";
+      e.textContent=i<n?t:d;
+      e.style.fontSize=(28+rnd(12))+"px";
+      e.style.left=(4+rnd(78))+"%"; e.style.top=(2+rnd(58))+"%";
+      e.style.animationDelay=(-Math.random()*1.6)+"s";
+      s.appendChild(e);
+    }
+    const g=document.createElement("div"); g.style.cssText="position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px";
+    shuffle([...opts]).forEach(v=>{
+      const c=document.createElement("div"); c.className="chip"; c.style.minHeight="64px"; c.textContent=v;
+      c.dataset.r=v===n?"1":"0"; g.appendChild(c);
+    });
+    s.appendChild(g);
+  }};
+}
+
+const ODD=[["😺","😸"],["🌛","🌜"],["🐪","🐫"],["🍩","🍪"],["🟢","🟩"],["⭐","🌟"],["😴","😪"],["🐶","🐺"],["☕","🍵"],["🦆","🐧"]];
+function makeOdd(){
+  const [a,b]=shuffle(pick(ODD));
+  const n=level<2?3:level<4?4:5;
+  const oddIdx=rnd(n*n);
+  return {prompt:"Tap the odd one out", ttl:ttl(4600), build(s){
+    const g=document.createElement("div"); g.className="ogrid";
+    g.style.gridTemplateColumns="repeat("+n+",1fr)";
+    for(let i=0;i<n*n;i++){
+      const c=document.createElement("div"); c.className="ocell";
+      c.textContent=i===oddIdx?b:a; c.dataset.r=i===oddIdx?"1":"0";
+      g.appendChild(c);
+    }
+    s.appendChild(g);
+  }};
+}
+
+function makeMemory(){
+  const em=shuffle(EMOJI).slice(0,4); // 3 shown + 1 decoy
+  const shown=em.slice(0,3), decoy=em[3];
+  const posIdx=rnd(3), posName=["LEFT","MIDDLE","RIGHT"][posIdx];
+  return {prompt:"👀 Memorize…", ttl:ttl(4400), defer:true, build(s,api){
+    const row=document.createElement("div"); row.className="memrow";
+    shown.forEach(e=>{const d=document.createElement("div");d.textContent=e;row.appendChild(d);});
+    s.appendChild(row);
+    api.later(()=>{
+      if(state!=="play")return;
+      row.remove();
+      promptEl.innerHTML="Which was in the <u>"+posName+"</u>?";
+      const g=document.createElement("div"); g.className="grid2";
+      shuffle(em).forEach(e=>{
+        const c=document.createElement("div"); c.className="chip"; c.textContent=e;
+        c.dataset.r=e===shown[posIdx]?"1":"0"; g.appendChild(c);
+      });
+      s.appendChild(g);
+      api.arm();
+    },1150);
+  }};
+
+}
+
+function makeArrow(){
+  const DIRS=["UP","RIGHT","DOWN","LEFT"], GLYPH={UP:"⬆️",RIGHT:"➡️",DOWN:"⬇️",LEFT:"⬅️"};
+  const word=pick(DIRS); let arrow=pick(DIRS); while(arrow===word)arrow=pick(DIRS);
+  const byWord=Math.random()<.5;
+  const correct=byWord?word:arrow;
+  return {
+    prompt:byWord?"Tap what the <u>WORD</u> says":"Tap where the <u>ARROW</u> points",
+    ttl:ttl(4200),
+    build(s){
+      const w=document.createElement("div"); w.className="padwrap";
+      const st=document.createElement("div"); st.className="stim";
+      st.innerHTML=GLYPH[arrow]+"<small>"+word+"</small>";
+      w.appendChild(st);
+      const dp=document.createElement("div"); dp.className="dpad";
+      // grid positions: row1: _,UP,_ ; row2: LEFT,DOWN,RIGHT
+      [["UP",2,1],["LEFT",1,2],["DOWN",2,2],["RIGHT",3,2]].forEach(([d,col,row])=>{
+        const b=document.createElement("div"); b.className="dbtn"; b.textContent=GLYPH[d];
+        b.style.gridColumn=col; b.style.gridRow=row;
+        b.dataset.r=d===correct?"1":"0";
+        dp.appendChild(b);
+      });
+      w.appendChild(dp); s.appendChild(w);
+    }
+  };
+}
+
+function makeSeq(){
+  const kind=level<3?pick(["add","add","mul"]):pick(["add","mul","sq","fib"]);
+  let seq,ans;
+  if(kind==="add"){const st=1+rnd(9),k=2+rnd(6);seq=[st,st+k,st+2*k];ans=st+3*k;}
+  else if(kind==="mul"){const st=1+rnd(4),k=2+(level<3?0:rnd(2));seq=[st,st*k,st*k*k];ans=st*k*k*k;}
+  else if(kind==="sq"){const st=1+rnd(4);seq=[st*st,(st+1)*(st+1),(st+2)*(st+2)];ans=(st+3)*(st+3);}
+  else{const a0=1+rnd(3),b0=a0+1+rnd(2);seq=[a0,b0,a0+b0];ans=b0+(a0+b0);}
+  const opts=new Set([ans]);
+  while(opts.size<4){const v=ans+pick([1,-1,2,-2,ans>10?Math.round(ans*.25):3]);if(v>0)opts.add(v);}
+  return {prompt:seq.join(", ")+", <u>?</u>", ttl:ttl(5000), build(s){
+    const g=document.createElement("div"); g.className="grid2";
+    shuffle([...opts]).forEach(v=>{
+      const c=document.createElement("div"); c.className="chip"; c.textContent=v;
+      c.dataset.r=v===ans?"1":"0"; g.appendChild(c);
+    });
+    s.appendChild(g);
+  }};
+}
+
+const TRIVIA=[
+ ["How many legs does a spider have?","8","6","10","4"],
+ ["What planet is called the Red Planet?","Mars","Venus","Jupiter","Mercury"],
+ ["How many continents are there?","7","5","6","8"],
+ ["What do bees make?","Honey","Milk","Silk","Wax paper"],
+ ["Largest ocean on Earth?","Pacific","Atlantic","Indian","Arctic"],
+ ["How many sides does a hexagon have?","6","5","7","8"],
+ ["What color do blue and yellow make?","Green","Purple","Orange","Brown"],
+ ["Fastest land animal?","Cheetah","Lion","Horse","Ostrich"],
+ ["How many minutes in an hour and a half?","90","80","100","95"],
+ ["Which is NOT a primary color?","Green","Red","Blue","Yellow"],
+ ["What is H2O?","Water","Oxygen","Salt","Hydrogen"],
+ ["How many days in a leap year?","366","365","364","367"],
+ ["Capital of France?","Paris","Rome","Berlin","Madrid"],
+ ["Which animal says 'moo'?","Cow","Duck","Cat","Pig"],
+ ["How many strings on a standard guitar?","6","4","5","7"],
+ ["Which month has 28 days?","All of them","February","January","June"],
+ ["What is a baby cat called?","Kitten","Puppy","Cub","Calf"],
+ ["Largest planet in our solar system?","Jupiter","Saturn","Earth","Neptune"],
+ ["How many zeros in one million?","6","5","7","4"],
+ ["Which of these is a fruit?","Tomato","Carrot","Potato","Celery"],
+ ["What do pandas mostly eat?","Bamboo","Fish","Honey","Grass"],
+ ["Opposite of 'ancient'?","Modern","Old","Antique","Classic"],
+ ["How many colors in a rainbow?","7","6","8","5"],
+ ["Which sea creature has 3 hearts?","Octopus","Shark","Whale","Crab"],
+ ["What is the largest mammal?","Blue whale","Elephant","Giraffe","Hippo"],
+ ["How many bones does a shark have?","0","206","54","12"],
+ ["Which country gave us pizza?","Italy","France","Greece","Spain"],
+ ["What's frozen water called?","Ice","Steam","Fog","Dew"],
+ ["How many players on a soccer team (on field)?","11","9","10","12"],
+ ["Which direction does the sun rise?","East","West","North","South"],
+ ["A group of lions is called a…","Pride","Pack","Herd","Flock"],
+ ["What's the tallest animal?","Giraffe","Elephant","Camel","Moose"],
+ ["Which one is a vegetable?","Broccoli","Apple","Grape","Mango"],
+ ["How many hours in two days?","48","24","36","40"],
+ ["The Great Wall is in which country?","China","Japan","India","Egypt"],
+ ["What do caterpillars turn into?","Butterflies","Bees","Beetles","Birds"],
+ ["Which instrument has 88 keys?","Piano","Guitar","Violin","Drums"],
+ ["What's a baby dog called?","Puppy","Kitten","Foal","Chick"],
+ ["Coldest continent?","Antarctica","Alaska","Iceland","Greenland"],
+ ["How many wheels on a tricycle?","3","2","4","1"],
+ ["Which gas do we breathe in to live?","Oxygen","Carbon dioxide","Helium","Nitrogen"],
+ ["Where do polar bears live?","Arctic","Antarctica","Africa","Australia"],
+ ["What shape is a stop sign?","Octagon","Hexagon","Circle","Triangle"],
+ ["Which is the smallest: gram, kilogram, or ton?","Gram","Kilogram","Ton","They're equal"],
+];
+let triviaDeck=[];
+function makeTrivia(){
+  if(!triviaDeck.length)triviaDeck=shuffle(TRIVIA);
+  const q=triviaDeck.pop();
+  return {prompt:esc(q[0]), ttl:ttl(5600), build(s){
+    const g=document.createElement("div"); g.className=q.slice(1).some(o=>o.length>10)?"grid1":"grid2";
+    shuffle(q.slice(1)).forEach(o=>{
+      const c=document.createElement("div"); c.className="chip small"; c.textContent=o;
+      c.dataset.r=o===q[1]?"1":"0"; g.appendChild(c);
+    });
+    s.appendChild(g);
+  }};
+}
+
+const GENS=[
+ {id:"tap",   lvl:1, w:3, f:makeTap},
+ {id:"math",  lvl:1, w:3, f:makeMath},
+ {id:"opp",   lvl:1, w:3, f:makeOpposite},
+ {id:"big",   lvl:1, w:2, f:makeBigNum},
+ {id:"stroop",lvl:2, w:3, f:makeStroop},
+ {id:"dont",  lvl:2, w:2, f:makeDontTap},
+ {id:"count", lvl:2, w:2, f:makeCount},
+ {id:"arrow", lvl:3, w:2, f:makeArrow},
+ {id:"odd",   lvl:3, w:2, f:makeOdd},
+ {id:"trivia",lvl:3, w:2, f:makeTrivia},
+ {id:"seq",   lvl:3, w:2, f:makeSeq},
+ {id:"mem",   lvl:4, w:2, f:makeMemory},
+ {id:"hold",  lvl:4, w:1, f:makeHoldStill},
+];
+function pickGen(){
+  const pool=GENS.filter(g=>g.lvl<=level&&g.id!==lastGen&&g.id!==prevGen);
+  const tot=pool.reduce((a,g)=>a+g.w,0);
+  let r=Math.random()*tot;
+  for(const g of pool){ if((r-=g.w)<0)return g; }
+  return pool[0];
+}
+
+function nextChallenge(){
+  if(state!=="play")return;
+  const g=pickGen(); prevGen=lastGen; lastGen=g.id;
+  const c=g.f();
+  stage.innerHTML="";
+  promptEl.innerHTML=c.prompt;
+  holdActive=!!c.hold;
+  timeoutWins=!!c.timeoutWins;
+  const ms=c.ttl;
+  locked=true;
+  c.build(stage,{arm:()=>armBar(ms), later:(fn,delay)=>{gapTimer=setTimeout(fn,delay);}});
+  if(!c.defer)armBar(ms);
+}
+
+/* =================== flow =================== */
+function setMuteLabels(){
+  $("muteBtn").textContent=muted?"🔇 sound off":"🔊 sound on";
+  $("muteBtn2").textContent=muted?"🔇":"🔊";
+}
+function toggleMute(){ muted=!muted; localStorage.setItem("frz_muted",muted?"1":"0"); setMuteLabels(); if(!muted){ac();sCorrect(0);} }
+$("muteBtn").addEventListener("click",toggleMute);
+$("muteBtn2").addEventListener("click",toggleMute);
+
+function showBest(){ $("bestLine").textContent=best>0?("👑 best: "+best.toLocaleString()):"no best yet — set the bar"; }
+
+function startRun(){
+  $("startScr").classList.add("hide"); $("overScr").classList.add("hide");
+  document.body.classList.remove("fever");
+  score=0;streak=0;bestCombo=0;right=0;wrong=0;level=1;lastGen="";prevGen="";lowTickSec=-1;
+  timeLeft=START_MS; updHud();
+  stage.innerHTML=""; promptEl.innerHTML="get ready…"; cfill.style.transform="scaleX(1)";
+  state="count";
+  const cd=$("count"); cd.style.display="flex";
+  const steps=["3","2","1","GO!"];
+  steps.forEach((t,i)=>{
+    setTimeout(()=>{
+      cd.innerHTML="<span>"+t+"</span>";
+      t==="GO!"?sGo():sCount();
+      if(t==="GO!")setTimeout(()=>{
+        cd.style.display="none";
+        state="play"; lastTick=0;
+        rafId=requestAnimationFrame(loop);
+        nextChallenge();
+      },550);
+    },i*820);
+  });
+}
+
+const RANKS=[[1000,"😴 Sleepy Sloth"],[2500,"🐢 Warming Up"],[5000,"☕ Caffeinated"],[9000,"⚡ Dopamine Dealer"],[14000,"🔥 Frenzy Fiend"],[20000,"🧠 Certified Cracked"],[Infinity,"👑 ABSOLUTELY UNHINGED"]];
+function gameOver(){
+  state="over"; cancelAnimationFrame(rafId);
+  clearTimeout(chTimer); clearTimeout(gapTimer);
+  cfill.style.transition="none"; cfill.style.transform="scaleX(0)";
+  document.body.classList.remove("fever");
+  sOver();
+  const isBest=score>best;
+  if(isBest){ best=score; localStorage.setItem("frz_best",String(best)); }
+  $("rank").textContent=RANKS.find(r=>score<r[0])[1];
+  $("stCombo").textContent="×"+clamp(1+Math.floor(bestCombo/3),1,8)+" ("+bestCombo+")";
+  $("stRight").textContent=right;
+  $("stWrong").textContent=wrong;
+  $("stAcc").textContent=(right+wrong?Math.round(100*right/(right+wrong)):0)+"%";
+  $("newbest").style.display=isBest?"block":"none";
+  $("overScr").classList.remove("hide");
+  // count-up
+  const el=$("finalScore"), t0=performance.now(), dur=900, from=0;
+  (function cnt(t){
+    const p=clamp((t-t0)/dur,0,1);
+    el.textContent=Math.round(from+(score-from)*(1-Math.pow(1-p,3))).toLocaleString();
+    if(p<1)requestAnimationFrame(cnt); else if(isBest){burst(innerWidth/2,innerHeight*.3,40);}
+  })(t0);
+}
+
+$("playBtn").addEventListener("click",()=>{ac();startRun();});
+$("againBtn").addEventListener("click",()=>{ac();startRun();});
+setMuteLabels(); showBest();
+/* pause when the tab is hidden: the rAF clock stops but setTimeout keeps firing,
+   which would silently bleed timeout penalties. Freeze both, resume on return. */
+document.addEventListener("visibilitychange",()=>{
+  if(state!=="play")return;
+  if(document.hidden){
+    lastTick=0; cancelAnimationFrame(rafId);
+    if(!locked){
+      pausedRemain=Math.max(300, challengeMs-(performance.now()-challengeT0));
+      clearTimeout(chTimer); locked=true; pauseMode="ch";
+      cfill.style.transition="none";
+    }else{
+      clearTimeout(gapTimer); pauseMode="gap";
+    }
+  }else{
+    lastTick=0; rafId=requestAnimationFrame(loop);
+    if(pauseMode==="ch")armBar(pausedRemain);
+    else if(pauseMode==="gap")gapTimer=setTimeout(nextChallenge,300);
+    pauseMode=null;
+  }
+});
+
+/* debug hook (testing only) */
+window.FRZ={get state(){return state;},get score(){return score;},get level(){return level;},
+  start:startRun,end:gameOver,addTime:ms=>{timeLeft=clamp(timeLeft+ms,0,CAP_MS);}};
+})();
+</script>
+</body>
+</html>
