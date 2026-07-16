@@ -89,7 +89,7 @@ _TEMPLATE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <nav class="topnav">
  <div class="navrow">
   <a class="brand" href="/">&#128122; John Lavender</a>
-  <div class="tabs"><a class="tab" href="/research">Research</a><a class="tab" href="/games">Games</a><a class="tab" href="/scan">Scanner</a><a class="tab on" href="/dashboard">Dashboard</a></div>
+  <div class="tabs"><a class="tab" href="/research">Research</a><a class="tab" href="/games">Games</a><a class="tab" href="/games/frenzy/">Frenzy</a><a class="tab" href="/scan">Scanner</a><a class="tab on" href="/dashboard">Dashboard</a></div>
   <span class="navright"><span class="gen" id="gen"></span>
    <label style="font-size:13px;color:var(--muted)">run&nbsp;<select id="runsel" aria-label="Select run"></select></label></span>
  </div>
