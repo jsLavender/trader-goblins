@@ -374,8 +374,8 @@ const EMOJI=["🦄","🌮","🐸","🚀","🍕","👾","🐙","🌵","🎩","�
 const COLORS=[["RED","#ff4d5e"],["BLUE","#3d8bff"],["GREEN","#3dff9a"],["YELLOW","#ffd23d"],["PINK","#ff7ad9"],["PURPLE","#a86bff"]];
 
 function makeTap(){
-  const n=8+level*2;
-  const items=shuffle(EMOJI).slice(0,5);
+  const n=16+level*4;
+  const items=shuffle(EMOJI).slice(0,8);
   const target=items[0];
   return {prompt:"Tap the "+target, ttl:ttl(4200), build(s){
     for(let i=0;i<n;i++){
@@ -383,8 +383,9 @@ function makeTap(){
       const isT=i===0;
       d.textContent=isT?target:pick(items.slice(1));
       d.dataset.r=isT?"1":"0";
-      d.style.fontSize=(30+rnd(16))+"px";
-      d.style.left=(4+rnd(78))+"%"; d.style.top=(4+rnd(80))+"%";
+      if(isT)d.style.zIndex="2"; // never buried under the swarm
+      d.style.fontSize=(26+rnd(16))+"px";
+      d.style.left=(3+rnd(82))+"%"; d.style.top=(3+rnd(84))+"%";
       d.style.animationDelay=(-Math.random()*1.6)+"s";
       s.appendChild(d);
     }
