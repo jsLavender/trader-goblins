@@ -155,6 +155,17 @@
  .ghostbtn{font:inherit;font-size:14px;font-weight:700;border-radius:999px;cursor:pointer;
   padding:9px 20px;color:var(--ink);background:#ffffff10;border:1px solid #ffffff26;text-decoration:none}
  .beststrip{font-size:14px;color:var(--neon4);font-weight:800}
+ .dailyline{font-size:12.5px;color:var(--muted);margin:-6px 0 2px}
+ .bigbtn.alt{background:linear-gradient(90deg,var(--neon5),var(--neon2));color:#fff;
+  font-size:17px;padding:11px 30px;box-shadow:0 0 22px #a86bff55}
+ .bigbtn:disabled{opacity:.45;cursor:default;animation:none}
+ #masteryBox{width:min(92vw,340px);max-height:26vh;overflow-y:auto;font-size:12.5px;text-align:left}
+ #masteryBox .mhead{font-size:11px;letter-spacing:.22em;color:var(--muted);text-align:center;margin:2px 0 4px;font-weight:800}
+ #masteryBox .mrow{display:flex;justify-content:space-between;gap:12px;padding:3px 8px;border-radius:7px;
+  font-variant-numeric:tabular-nums}
+ #masteryBox .mrow i{color:var(--muted);font-style:normal}
+ #masteryBox .mrow.weak{background:#ff4d5e22;color:#ffb3ba}
+ #masteryBox .mrow.sharp{background:#3dff9a1e;color:#b8ffd9}
  .rowbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
 
  /* countdown */
@@ -196,7 +207,9 @@
  <h1 class="logo">FRENZY</h1>
  <p class="tag">Rapid-fire chaos. Tap fast, read faster — the rules change every three seconds. Right answers add time, wrong ones eat it.</p>
  <div class="beststrip" id="bestLine"></div>
- <button class="bigbtn" id="playBtn">PLAY</button>
+ <button class="bigbtn" id="dailyBtn">⚡ DAILY</button>
+ <div class="dailyline" id="dailyLine"></div>
+ <button class="bigbtn alt" id="freeBtn">FREE PLAY</button>
  <div class="rowbtns">
   <button class="ghostbtn" id="muteBtn">🔊 sound on</button>
   <a class="ghostbtn" href="/games">← arcade</a>
@@ -213,7 +226,11 @@
   <span>accuracy <b id="stAcc">0%</b></span>
   <span>missed <b id="stWrong">0</b></span>
  </div>
- <button class="bigbtn" id="againBtn">AGAIN!</button>
+ <div id="masteryBox"></div>
+ <div class="rowbtns">
+  <button class="bigbtn alt" id="shareBtn" style="display:none">📋 SHARE</button>
+  <button class="bigbtn" id="againBtn">AGAIN!</button>
+ </div>
  <div class="rowbtns">
   <button class="ghostbtn" id="muteBtn2">🔊</button>
   <a class="ghostbtn" href="/games">← arcade</a>
@@ -226,9 +243,26 @@
 /* =================== helpers =================== */
 const $ = id => document.getElementById(id);
 const stage=$("stage"), promptEl=$("prompt"), cfill=$("cfill"), fx=$("fx");
-const rnd=n=>Math.floor(Math.random()*n);
+/* R = active RNG. Free play: Math.random. Daily runs swap in a date-seeded PRNG
+   while generating each challenge, so every player gets the identical sequence. */
+let R=Math.random;
+const rnd=n=>Math.floor(R()*n);
 const pick=a=>a[rnd(a.length)];
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+function mulberry32(seed){
+  let a=seed>>>0;
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    let t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+const DAY0=Math.floor(Date.UTC(2026,6,16)/864e5); // daily #1 = 2026-07-16
+function localDay(){ return Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/864e5); }
+function dailyNum(){ return localDay()-DAY0+1; }
+function jget(k,d){ try{const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v;}catch(e){return d;} }
+function jset(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -266,6 +300,13 @@ let locked=true, holdActive=false, timeoutWins=false, challengeT0=0, challengeMs
 let pauseMode=null, pausedRemain=0;
 let lastGen="", prevGen="";
 let best=+(localStorage.getItem("frz_best")||0);
+let dailyMode=false, runRng=null, chIndex=0, curGenId="", roundLog=[], shareText="";
+let mastery=jget("frz_mastery",{});
+function bumpMastery(id,ok,ms){
+  const m=mastery[id]||(mastery[id]=[0,0,0]);
+  m[0]++; if(ok)m[1]++; m[2]+=ms;
+  jset("frz_mastery",mastery);
+}
 
 function mult(){ return clamp(1+Math.floor(streak/3),1,8); }
 function fever(){ return streak>=10; }
@@ -340,6 +381,9 @@ function resolve(ok,opts){
   clearTimeout(chTimer);
   cfill.style.transition="none";
   const [x,y]=opts&&opts.el?centerXY(opts.el):centerXY(null);
+  const respMs=opts&&opts.timeout?challengeMs:Math.round(performance.now()-challengeT0);
+  bumpMastery(curGenId,ok,respMs);
+  roundLog.push(ok);
   if(ok){
     right++; streak++; bestCombo=Math.max(bestCombo,streak);
     const wasFever=document.body.classList.contains("fever");
@@ -347,7 +391,7 @@ function resolve(ok,opts){
     let pts=Math.round((100+60*frac)*mult()); if(fever())pts*=2;
     score+=pts;
     timeLeft=Math.min(CAP_MS,timeLeft+GAIN_MS);
-    level=clamp(1+Math.floor(right/6),1,6);
+    if(!dailyMode)level=clamp(1+Math.floor(right/6),1,6);
     sCorrect(streak); flash("good"); burst(x,y,fever()?26:14);
     popText(x,y-8,"+"+pts,"#ffd23d");
     if(streak>0&&streak%4===0)popText(x,y-52,pick(HYPE),"#00e5ff");
@@ -383,8 +427,8 @@ function spots(count,tTop,tBot){
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)cells.push([c,r]);
   const cw=92/cols, ch=(tBot-tTop)/rows;
   return shuffle(cells).slice(0,count).map(([c,r])=>({
-    l:2+c*cw+Math.random()*Math.max(0,cw-9),
-    t:tTop+r*ch+Math.random()*Math.max(0,ch-8)
+    l:2+c*cw+R()*Math.max(0,cw-9),
+    t:tTop+r*ch+R()*Math.max(0,ch-8)
   }));
 }
 const COLORS=[["RED","#ff4d5e"],["BLUE","#3d8bff"],["GREEN","#3dff9a"],["YELLOW","#ffd23d"],["PINK","#ff7ad9"],["PURPLE","#a86bff"]];
@@ -411,7 +455,7 @@ function makeTap(){
 
 function makeStroop(){
   const cs=shuffle(COLORS).slice(0,4);
-  const byWord=Math.random()<.5;
+  const byWord=R()<.5;
   // derangement of inks so no chip's ink matches its own word
   let inks;
   do{ inks=shuffle(cs); }while(inks.some((c,i)=>c[0]===cs[i][0]));
@@ -434,10 +478,10 @@ function makeStroop(){
 }
 
 function makeOpposite(){
-  const lr=Math.random()<.6;
+  const lr=R()<.6;
   const dirs=lr?["LEFT","RIGHT"]:["TOP","BOTTOM"];
   const said=pick(dirs);
-  const flip=level>=2&&Math.random()<.45;
+  const flip=level>=2&&R()<.45;
   const correct=flip?dirs.find(d=>d!==said):said;
   return {
     prompt:(flip?'<span class="mod">🙃 OPPOSITE!</span> ':"")+"Tap "+said,
@@ -497,7 +541,7 @@ function makeMath(){
 }
 
 function makeBigNum(){
-  const wantBig=Math.random()<.5;
+  const wantBig=R()<.5;
   const nums=new Set(); while(nums.size<4)nums.add(10+rnd(level<3?89:989));
   const arr=[...nums], target=wantBig?Math.max(...arr):Math.min(...arr);
   return {prompt:"Tap the <u>"+(wantBig?"BIGGEST":"SMALLEST")+"</u> number", ttl:ttl(3800), build(s){
@@ -558,6 +602,7 @@ function makeMemory(){
   const em=shuffle(EMOJI).slice(0,4); // 3 shown + 1 decoy
   const shown=em.slice(0,3), decoy=em[3];
   const posIdx=rnd(3), posName=["LEFT","MIDDLE","RIGHT"][posIdx];
+  const optOrder=shuffle(em); // fixed at make time so daily boards match for everyone
   return {prompt:"👀 Memorize…", ttl:ttl(4400), defer:true, build(s,api){
     const row=document.createElement("div"); row.className="memrow";
     shown.forEach(e=>{const d=document.createElement("div");d.textContent=e;row.appendChild(d);});
@@ -567,7 +612,7 @@ function makeMemory(){
       row.remove();
       promptEl.innerHTML="Which was in the <u>"+posName+"</u>?";
       const g=document.createElement("div"); g.className="grid2";
-      shuffle(em).forEach(e=>{
+      optOrder.forEach(e=>{
         const c=document.createElement("div"); c.className="chip"; c.textContent=e;
         c.dataset.r=e===shown[posIdx]?"1":"0"; g.appendChild(c);
       });
@@ -581,7 +626,7 @@ function makeMemory(){
 function makeArrow(){
   const DIRS=["UP","RIGHT","DOWN","LEFT"], GLYPH={UP:"⬆️",RIGHT:"➡️",DOWN:"⬇️",LEFT:"⬅️"};
   const word=pick(DIRS); let arrow=pick(DIRS); while(arrow===word)arrow=pick(DIRS);
-  const byWord=Math.random()<.5;
+  const byWord=R()<.5;
   const correct=byWord?word:arrow;
   return {
     prompt:byWord?"Tap what the <u>WORD</u> says":"Tap where the <u>ARROW</u> points",
@@ -701,14 +746,17 @@ const GENS=[
 function pickGen(){
   const pool=GENS.filter(g=>g.lvl<=level&&g.id!==lastGen&&g.id!==prevGen);
   const tot=pool.reduce((a,g)=>a+g.w,0);
-  let r=Math.random()*tot;
+  let r=R()*tot;
   for(const g of pool){ if((r-=g.w)<0)return g; }
   return pool[0];
 }
 
 function nextChallenge(){
   if(state!=="play")return;
-  const g=pickGen(); prevGen=lastGen; lastGen=g.id;
+  chIndex++;
+  if(dailyMode)level=clamp(1+Math.floor((chIndex-1)/7),1,6); // ramp by round #, not skill: keeps everyone's sequence identical
+  if(runRng)R=runRng;
+  const g=pickGen(); prevGen=lastGen; lastGen=g.id; curGenId=g.id;
   const c=g.f();
   stage.innerHTML="";
   promptEl.innerHTML=c.prompt;
@@ -717,6 +765,7 @@ function nextChallenge(){
   const ms=c.ttl;
   locked=true;
   c.build(stage,{arm:()=>armBar(ms), later:(fn,delay)=>{gapTimer=setTimeout(fn,delay);}});
+  R=Math.random; // seeded window closed: cosmetics (particles, hype text) draw unseeded
   if(!c.defer)armBar(ms);
 }
 
@@ -729,12 +778,31 @@ function toggleMute(){ muted=!muted; localStorage.setItem("frz_muted",muted?"1":
 $("muteBtn").addEventListener("click",toggleMute);
 $("muteBtn2").addEventListener("click",toggleMute);
 
-function showBest(){ $("bestLine").textContent=best>0?("👑 best: "+best.toLocaleString()):"no best yet — set the bar"; }
+function updateStartUI(){
+  $("bestLine").textContent=best>0?("👑 best: "+best.toLocaleString()):"no best yet — set the bar";
+  const rec=jget("frz_daily",null), st=jget("frz_streak",{last:0,n:0}), day=localDay();
+  const played=rec&&rec.day===day;
+  const streakTxt=st.n>0&&st.last>=day-1?(" · 🗓️ streak "+st.n):"";
+  const db=$("dailyBtn");
+  db.disabled=played;
+  db.textContent=played?"✓ DAILY #"+dailyNum()+" DONE":"⚡ DAILY #"+dailyNum();
+  $("dailyLine").textContent=played
+    ? "today: "+rec.score.toLocaleString()+streakTxt+" — back tomorrow"
+    : "same run for everyone · one shot per day"+streakTxt;
+}
 
-function startRun(){
+function startRun(daily){
+  if(daily){
+    const rec=jget("frz_daily",null);
+    if(rec&&rec.day===localDay()){ updateStartUI(); return; }
+  }
+  dailyMode=!!daily;
+  runRng=daily?mulberry32((localDay()*2654435761)>>>0):null;
+  if(daily){ R=runRng; triviaDeck=shuffle(TRIVIA); R=Math.random; }
   $("startScr").classList.add("hide"); $("overScr").classList.add("hide");
   document.body.classList.remove("fever");
   score=0;streak=0;bestCombo=0;right=0;wrong=0;level=1;lastGen="";prevGen="";lowTickSec=-1;
+  chIndex=0;roundLog=[];shareText="";
   timeLeft=START_MS; updHud();
   stage.innerHTML=""; promptEl.innerHTML="get ready…"; cfill.style.transform="scaleX(1)";
   state="count";
@@ -755,6 +823,27 @@ function startRun(){
 }
 
 const RANKS=[[1000,"😴 Sleepy Sloth"],[2500,"🐢 Warming Up"],[5000,"☕ Caffeinated"],[9000,"⚡ Dopamine Dealer"],[14000,"🔥 Frenzy Fiend"],[20000,"🧠 Certified Cracked"],[Infinity,"👑 ABSOLUTELY UNHINGED"]];
+const MNAME={tap:["🎯","Tap Target"],stroop:["🎨","Stroop"],opp:["↔️","Directions"],dont:["⛔","Forbidden"],hold:["🧘","Nerve Test"],math:["➕","Math"],big:["🔢","Big or Small"],count:["🧮","Counting"],arrow:["🧭","Arrows"],odd:["🕵️","Odd One Out"],mem:["🧠","Memory"],trivia:["💡","Trivia"],seq:["🔗","Sequences"]};
+function renderMastery(){
+  const rows=Object.entries(mastery)
+    .filter(([id,m])=>MNAME[id]&&m[0]>0)
+    .map(([id,m])=>({id,n:m[0],pct:Math.round(100*m[1]/m[0]),avg:m[2]/m[0]/1000}))
+    .sort((a,b)=>a.pct-b.pct||b.n-a.n);
+  const box=$("masteryBox");
+  if(rows.length<2){ box.innerHTML=""; return; }
+  box.innerHTML="<div class='mhead'>MASTERY</div>"+rows.map((r,i)=>{
+    const cls=i===0?"weak":(i===rows.length-1?"sharp":"");
+    return "<div class='mrow "+cls+"'><span>"+MNAME[r.id][0]+" "+MNAME[r.id][1]+"</span>"+
+      "<span>"+r.pct+"% · "+r.avg.toFixed(1)+"s <i>("+r.n+")</i></span></div>";
+  }).join("");
+}
+function buildShare(rec,st){
+  const rows=[]; for(let i=0;i<rec.grid.length;i+=10)rows.push(rec.grid.slice(i,i+10).map(o=>o?"🟩":"🟥").join(""));
+  const total=rec.right+rec.wrong;
+  const extra=total>rec.grid.length?"\n…+"+(total-rec.grid.length)+" more rounds":"";
+  return "⚡ FRENZY Daily #"+dailyNum()+"\n🏆 "+rec.score.toLocaleString()+" · best combo "+rec.bestCombo+
+    "\n✅ "+rec.right+" ❌ "+rec.wrong+" · 🗓️ streak "+st.n+"\n"+rows.join("\n")+extra;
+}
 function gameOver(){
   state="over"; cancelAnimationFrame(rafId);
   clearTimeout(chTimer); clearTimeout(gapTimer);
@@ -763,6 +852,19 @@ function gameOver(){
   sOver();
   const isBest=score>best;
   if(isBest){ best=score; localStorage.setItem("frz_best",String(best)); }
+  if(dailyMode){
+    const day=localDay(), rec={day,score,bestCombo,right,wrong,grid:roundLog.slice(0,30)};
+    jset("frz_daily",rec);
+    let st=jget("frz_streak",{last:0,n:0});
+    st={last:day, n:st.last===day-1?st.n+1:1};
+    jset("frz_streak",st);
+    shareText=buildShare(rec,st);
+    updateStartUI();
+  }
+  $("shareBtn").style.display=dailyMode?"":"none";
+  $("shareBtn").textContent="📋 SHARE";
+  $("againBtn").textContent=dailyMode?"FREE PLAY":"AGAIN!";
+  renderMastery();
   $("rank").textContent=RANKS.find(r=>score<r[0])[1];
   $("stCombo").textContent="×"+clamp(1+Math.floor(bestCombo/3),1,8)+" ("+bestCombo+")";
   $("stRight").textContent=right;
@@ -779,9 +881,20 @@ function gameOver(){
   })(t0);
 }
 
-$("playBtn").addEventListener("click",()=>{ac();startRun();});
-$("againBtn").addEventListener("click",()=>{ac();startRun();});
-setMuteLabels(); showBest();
+$("dailyBtn").addEventListener("click",()=>{ac();startRun(true);});
+$("freeBtn").addEventListener("click",()=>{ac();startRun(false);});
+$("againBtn").addEventListener("click",()=>{ac();startRun(false);});
+$("shareBtn").addEventListener("click",()=>{
+  const done=()=>{ $("shareBtn").textContent="COPIED ✓"; setTimeout(()=>{$("shareBtn").textContent="📋 SHARE";},1500); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(shareText).then(done,()=>fallbackCopy(done)); }
+  else fallbackCopy(done);
+  function fallbackCopy(cb){
+    const ta=document.createElement("textarea"); ta.value=shareText;
+    ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy");}catch(e){} ta.remove(); cb();
+  }
+});
+setMuteLabels(); updateStartUI();
 /* pause when the tab is hidden: the rAF clock stops but setTimeout keeps firing,
    which would silently bleed timeout penalties. Freeze both, resume on return. */
 document.addEventListener("visibilitychange",()=>{
@@ -805,6 +918,7 @@ document.addEventListener("visibilitychange",()=>{
 
 /* debug hook (testing only) */
 window.FRZ={get state(){return state;},get score(){return score;},get level(){return level;},
+  get shareText(){return shareText;},get daily(){return dailyMode;},
   start:startRun,end:gameOver,addTime:ms=>{timeLeft=clamp(timeLeft+ms,0,CAP_MS);}};
 })();
 </script>
