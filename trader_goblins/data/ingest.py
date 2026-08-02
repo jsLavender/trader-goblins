@@ -4,11 +4,15 @@ This is the orchestration layer that bridges the market-data providers
 (synthetic / yfinance) and the run-scoped `prices` table. It also synthesizes a
 benchmark series so every run has something to be measured against.
 
-The benchmark (default "SPY") is built as an **equal-weight index of the run's
-universe** -- the average of each name rebased to 100. In synthetic mode that's
-a principled benchmark (beating it = beating the average goblin-tradeable stock)
-rather than an arbitrary extra random walk. In live mode you'd ingest the real
-SPY series instead.
+The benchmark (default "SPY") depends on the provider. With a real provider
+(yfinance) the actual benchmark series is fetched and ingested, so "vs SPY"
+means vs SPY. Only in synthetic mode is it built as an **equal-weight index of
+the run's universe** -- the average of each name rebased to 100 -- a principled
+benchmark there (beating it = beating the average goblin-tradeable stock)
+rather than an arbitrary extra random walk. The synthetic index must never be
+used for a live run: it is rebased to the first day of the fetched lookback
+window, so on a *rolling* run the same calendar date gets a different value
+every ingest day (non-stationary), and it isn't SPY in the first place.
 
     python -m trader_goblins.data      # smoke test (synthetic, throwaway db)
 """
@@ -61,9 +65,23 @@ def build_run_prices(conn: sqlite3.Connection, run_id: int, provider,
         written[ticker] = price_store.insert_prices(conn, run_id, ticker, df, source)
 
     if benchmark and benchmark not in histories and histories:
-        bench_df = synthesize_benchmark(histories, name=benchmark)
-        written[benchmark] = price_store.insert_prices(
-            conn, run_id, benchmark, bench_df, f"{source}/benchmark")
+        if getattr(provider, "name", "") == "synthetic":
+            # Synthetic world: equal-weight index of the universe (see module doc).
+            bench_df = synthesize_benchmark(histories, name=benchmark)
+            written[benchmark] = price_store.insert_prices(
+                conn, run_id, benchmark, bench_df, f"{source}/benchmark")
+        else:
+            # Real provider: the benchmark must be the REAL series. On a fetch
+            # failure write nothing -- INSERT OR REPLACE would otherwise let a
+            # fallback overwrite good rows, and a rolling run can keep marking
+            # against yesterday's real closes until the next successful ingest.
+            try:
+                bench_df = provider.history(benchmark, lookback_days)
+                written[benchmark] = price_store.insert_prices(
+                    conn, run_id, benchmark, bench_df, source)
+            except Exception as e:  # noqa: BLE001 - benchmark is non-critical
+                print(f"  [data] benchmark {benchmark} fetch failed ({e}); "
+                      f"keeping any previously ingested rows")
 
     return written
 
