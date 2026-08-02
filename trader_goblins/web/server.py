@@ -57,6 +57,8 @@ _DASHBOARD_HTML = _ROOT / "reports" / "dashboard.html"
 _OFFICE_HTML = _ROOT / "reports" / "office.html"
 # Committed copy the public deploy serves (the local reports/ export isn't on Render).
 _OFFICE_PUBLISHED = _ROOT / "trader_goblins" / "web" / "office_published.html"
+_BOARD_PUBLISHED = _ROOT / "trader_goblins" / "web" / "board_published.html"
+_BOARD_HTML = _ROOT / "reports" / "board.html"             # /board -- the Board of Seven wall
 _GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
 _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
 _GAMES_PAGE_HTML = Path(__file__).with_name("games.html")  # /games arcade hub
@@ -403,6 +405,11 @@ class Handler(BaseHTTPRequestHandler):
             target = _OFFICE_HTML if _OFFICE_HTML.exists() else _OFFICE_PUBLISHED
             self._send_file(target, "text/html; charset=utf-8",
                             "No office yet — it publishes after the next market close.")
+        elif route == "/board":
+            # The Board of Seven wall (public-safe: paper opinions, no accounts).
+            target = _BOARD_HTML if _BOARD_HTML.exists() else _BOARD_PUBLISHED
+            self._send_file(target, "text/html; charset=utf-8",
+                            "No wall yet -- the board builds it after its next meeting.")
         elif route == "/api/deepdive":
             if not _rate_ok(self._client_ip()):
                 self._send(429, json.dumps({"error": "rate limited — slow down a moment"}),
