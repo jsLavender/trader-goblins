@@ -93,7 +93,8 @@ def repair(db_path: str, run_id: int, apply: bool) -> None:
     spy_ret = px(nav_dates[-1]) / px(nav_dates[0]) - 1.0
     print(f"SPY-Holder (acct {acct['id']}): marked {len(nav_dates)} days "
           f"{nav_dates[0]} -> {nav_dates[-1]}")
-    print(f"  stored return  {old_nav / acct['starting_cash'] - 1.0:+.2%}  (fake index)")
+    label = "fake index" if fake_rows else "already real"
+    print(f"  stored return  {old_nav / acct['starting_cash'] - 1.0:+.2%}  ({label})")
     print(f"  real SPY move  {spy_ret:+.2%}  over the same window")
 
     if not apply:
