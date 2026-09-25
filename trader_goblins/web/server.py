@@ -28,6 +28,7 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from .crypto_auth import authorized as crypto_authorized
 from .deepdive import build_deepdive
 from .live_account import render_live_account
 
@@ -63,6 +64,7 @@ _GAME_PAGE_HTML = Path(__file__).with_name("game.html")   # /play wrapper page
 _GAME_DIR = Path(__file__).with_name("game").resolve()    # the Godot web export
 _GAMES_PAGE_HTML = Path(__file__).with_name("games.html")  # /games arcade hub
 _GAMES_DIR = Path(__file__).with_name("games").resolve()   # the built word-game bundles
+_CRYPTO_GAME_DIR = (_GAMES_DIR / "crypto-search").resolve()
 _SCAN_HTML = Path(__file__).with_name("scan.html")         # /scan webcam card scanner
 _RESUME_HTML = Path(__file__).with_name("resume.html")     # / public resume landing page
 _RESUME_PDF = Path(__file__).with_name("John-Lavender-Resume.pdf")  # /resume.pdf download
@@ -237,19 +239,21 @@ class Handler(BaseHTTPRequestHandler):
         # compare_digest on both fields so a wrong guess leaks nothing via timing.
         return hmac.compare_digest(user, _AUTH_USER) and hmac.compare_digest(pw, _AUTH_PASS)
 
-    def _send_auth_challenge(self) -> None:
+    def _send_auth_challenge(self, realm: str = _AUTH_REALM) -> None:
         body = (
-            "<!doctype html><meta charset='utf-8'><title>Sign in &middot; Trader Goblins</title>"
+            f"<!doctype html><meta charset='utf-8'><title>Sign in &middot; {realm}</title>"
             "<body style='font-family:system-ui;max-width:32rem;margin:4rem auto;padding:0 1rem'>"
-            "<h1>&#128122; Trader Goblins</h1>"
+            f"<h1>{realm}</h1>"
             "<p>This area needs a username and password.</p>"
             "<p style='color:#888'>The <a href='/games'>games</a> and "
             "<a href='/research'>research</a> pages are open.</p></body>"
         ).encode("utf-8")
         self.send_response(401)
-        self.send_header("WWW-Authenticate", f'Basic realm="{_AUTH_REALM}", charset="UTF-8"')
+        self.send_header("WWW-Authenticate", f'Basic realm="{realm}", charset="UTF-8"')
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "private, no-store")
+        self.send_header("Vary", "Authorization")
         self._security_headers()
         self.end_headers()
         if self.command != "HEAD":
@@ -346,6 +350,12 @@ class Handler(BaseHTTPRequestHandler):
         target = (_GAMES_DIR / rel).resolve()
         if target.is_dir():                           # /games/wordle -> .../wordle/index.html
             target = target / "index.html"
+        # Check the resolved file location, so alternate paths containing '..'
+        # cannot bypass the gate. Protect the HTML and every puzzle/asset file.
+        crypto_game = target.is_relative_to(_CRYPTO_GAME_DIR)
+        if crypto_game and not crypto_authorized(self.headers.get("Authorization", "")):
+            self._send_auth_challenge("Crypto Search")
+            return
         # Containment guard: the resolved path must stay inside _GAMES_DIR.
         if _GAMES_DIR not in target.parents or not target.is_file():
             self._send(404, "not found", "text/plain; charset=utf-8")
@@ -355,6 +365,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
+        if crypto_game:
+            self.send_header("Cache-Control", "private, no-store")
+            self.send_header("Vary", "Authorization")
         for name, value in _GAMES_HEADERS.items():
             self.send_header(name, value)
         self.end_headers()
