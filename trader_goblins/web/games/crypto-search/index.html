@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12353d">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Crack a number code, search for hidden words, and solve the final secret. A playable Crypto-Search prototype.">
+  <title>Crypto Search · Crack. Search. Solve.</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2312353d'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='monospace' font-size='19' font-weight='bold' fill='%23e8bd60'%3E66%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/games/crypto-search/styles.css">
+  <script type="module" src="/games/crypto-search/game.mjs"></script>
+</head>
+<body>
+  <header class="masthead"><div class="masthead-inner">
+    <a class="brand" href="/games/crypto-search/" aria-label="Crypto Search home"><span class="brand-mark" aria-hidden="true">66</span><span>CRYPTO<span class="brand-light">SEARCH</span></span></a>
+    <div class="header-actions"><span class="prototype">PROTOTYPE</span><button class="text-button" id="help">How to play <span aria-hidden="true">?</span></button></div>
+  </div></header>
+  <main id="app">
+    <section class="puzzle-heading" aria-labelledby="puzzle-title">
+      <div><p class="eyebrow" id="puzzle-level"></p><h1 id="puzzle-title"></h1></div>
+      <div class="puzzle-picker"><label for="puzzle-select">Puzzle collection</label><select id="puzzle-select"></select></div>
+    </section>
+    <nav class="steps" aria-label="Puzzle stages">
+      <button data-stage="1"><span class="step-number">1</span><span>Crack the code<small>Find the pattern</small></span><span class="stage-check"></span></button>
+      <button data-stage="2"><span class="step-number">2</span><span>Search the grid<small>Find every word</small></span><span class="stage-check"></span></button>
+      <button data-stage="3"><span class="step-number">3</span><span>Solve the secret<small>Use what remains</small></span><span class="stage-check"></span></button>
+    </nav>
+    <div class="workspace">
+      <aside class="panel key-panel" aria-label="Code notebook">
+        <div class="panel-heading"><div><p class="eyebrow">YOUR NOTEBOOK</p><h2 id="notebook-title">The code key</h2></div><span class="counter" id="key-count"></span></div>
+        <div id="key-work">
+          <p class="intro" id="key-intro"></p>
+          <div class="key-legend"><span class="given-swatch"></span> Given <span class="solved-swatch"></span> Solved</div>
+          <form id="key-form" novalidate><div class="key-grid" id="key-grid"></div>
+            <div class="key-actions"><button class="primary" type="submit" id="check-key">Check entries</button><button class="secondary" type="button" id="fill-pattern">Extend A → B</button></div>
+          </form>
+          <p class="micro" id="pattern-note">Find A and B, then extend their pattern to fill the key.</p>
+        </div>
+        <div id="secret-work" hidden></div>
+        <div class="notebook-foot"><button id="hint" class="text-button">Need a hint?</button><span id="hint-note">Hints are counted</span></div>
+      </aside>
+      <section class="play-panel" aria-label="Puzzle board">
+        <div class="board-top"><div><p class="eyebrow" id="board-kicker">THE SEARCH GRID</p><h2 id="board-title">A secret in the numbers.</h2></div><span class="dimensions" id="dimensions"></span></div>
+        <p class="board-instruction" id="board-instruction"></p>
+        <div class="board-wrap"><div class="number-grid" id="number-grid" role="group" aria-label="Number search grid"></div><div id="celebration" aria-hidden="true"></div></div>
+        <div id="selection-bar"><span id="selection-label">Crack the code to unlock the grid.</span><button id="clear-selection" class="text-button" hidden>Clear</button><button id="board-hint" class="text-button" hidden>Grid hint</button></div>
+        <div class="word-section"><div class="word-heading"><h3>Words to find</h3><span id="word-count"></span></div><div class="word-list" id="word-list"></div></div>
+        <div id="result" hidden></div>
+      </section>
+    </div>
+    <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true">Start with the highlighted clues in your notebook.</div>
+    <div class="session-bar"><div class="stats"><span><strong id="mistakes">0</strong> mistakes</span><span><strong id="hints">0</strong> hints</span><span class="save-status" id="save-status">Saved on this browser</span></div><button id="restart" class="text-button">Restart puzzle</button></div>
+    <footer><span>Puzzles by Scott Berndt · Weber &amp; Berndt Enterprises</span><span>Browser prototype · 3 puzzles</span></footer>
+  </main>
+  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-heading"><h2 id="help-title">Three little breakthroughs.</h2><button class="close-dialog" aria-label="Close instructions">×</button></div><ol class="help-list"><li><strong>Crack the code.</strong><p>Each letter has a number. Use the given clues to work out the pattern. Enter a few numbers and check them. Once A and B are solved, “Extend A → B” fills the rest.</p></li><li><strong>Search the grid.</strong><p>The words get their numbers from your key. Drag across a matching sequence, or tap its first and last cells. Words run in straight lines, in any of eight directions, and can share cells.</p></li><li><strong>Solve the secret.</strong><p>The unused cells become letter tiles. Put them in order to discover one final word.</p></li></ol><p class="micro">A wrong check, word selection, or final answer counts as one mistake. Hints are counted separately. Tapping, typing, and clearing a selection do not count. There is no timer.</p><p class="micro">Keyboard: Tab to a cell and press Enter or Space to choose an endpoint. Arrow keys move around the board; Escape cancels a selection.</p><button class="primary close-help">Let's play</button></dialog>
+  <dialog id="restart-dialog" aria-labelledby="restart-title"><h2 id="restart-title">Start this puzzle again?</h2><p>Your code, found words, and counts for this puzzle will be cleared.</p><div class="dialog-actions"><button class="secondary" id="cancel-restart">Keep playing</button><button class="primary" id="confirm-restart">Restart</button></div></dialog>
+  <noscript><p>This game needs JavaScript enabled in your browser.</p></noscript>
+</body>
+</html>
