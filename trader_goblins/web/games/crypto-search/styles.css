@@ -6,3 +6,11 @@
 @media(max-width:360px){main{padding-left:12px;padding-right:12px}.masthead-inner{padding-left:12px;padding-right:12px}.key-grid{gap:5px}.cell{font-size:18px}.header-actions .text-button span{display:none}.puzzle-picker label{display:none}}
 .action-message{font-size:14px;color:#225448;line-height:1.5;margin:12px 0 0}.action-message:empty{display:none}.error-text{color:#9e3827!important}#selection-label{flex:1}#board-hint,#clear-selection{flex-shrink:0;min-height:44px}.key-panel,.play-panel{scroll-margin-top:18px}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* John Lavender shared dark palette, 2026-11-03. */
+:root{color-scheme:dark;--ink:#f0f1e9;--muted:#b1b8a8;--paper:#141713;--line:#394232;--teal:#d1ff55;--gold:#d1ff55;--navy:#293123;--font:Arial,Helvetica,sans-serif}
+.masthead,.panel,.puzzle-picker select,.secondary,.modal-card,.result-card{background:#1e231c;color:var(--ink);border-color:var(--line)}
+.brand-mark,.primary,.steps [aria-current=step] .step-number{background:#d1ff55;color:#141713;border-color:#d1ff55}
+.prototype,.action-message{color:#b1b8a8}.key-cell{background:#293123;border-color:#59664f}.key-cell.given{background:#453d24;border-color:#9c8955}.key-cell.valid,.steps .done .step-number{background:#223e2d;border-color:#548465}.key-cell.invalid{background:#482a25}.key-cell.invalid input,.error-text{color:#ff9b91!important}
+.cell{background:#293123;color:#f0f1e9}.cell.gated{background:#1e231c;color:#b1b8a8}.secondary{color:#d1ff55}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline-color:#96aaff}

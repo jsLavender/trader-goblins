@@ -1,0 +1,82 @@
+/* John Lavender — one dark palette across the portfolio, tools and arcade. */
+html[data-jl-theme] {
+ color-scheme:dark;
+ --paper:#141713;--bg:#141713;--surface:#1e231c;--panel:#1e231c;
+ --ink:#f0f1e9;--muted:#b1b8a8;--faint:#929c89;--line:#394232;
+ --blue:#96aaff;--lime:#d1ff55;--lilac:#c5baff;--orange:#ff986c;--white:#fffef7;
+ --accent:#d1ff55;--chip:#293123;--pos:#85dfac;--neg:#ff9b91;
+ --tg-bg:#1e231c;--tg-surface:#141713;--tg-line:#394232;
+ --tg-ink:#f0f1e9;--tg-muted:#b1b8a8;--tg-faint:#929c89;--tg-accent:#d1ff55;
+ background:#141713;
+}
+html[data-jl-theme] body {background:#141713;color:#f0f1e9;font-family:Arial,Helvetica,sans-serif}
+html[data-jl-theme] ::selection {background:#d1ff55;color:#141713}
+html[data-jl-theme] :focus-visible {outline:3px solid #96aaff;outline-offset:4px}
+.jl-nav,.jl-nav * {box-sizing:border-box}
+.jl-nav {display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;min-height:88px;margin:0 auto 36px;padding:20px 0;border-bottom:1px solid #394232;font:14px/1.5 Arial,Helvetica,sans-serif;text-align:left}
+.jl-nav a {text-decoration:none;color:#b1b8a8}
+.jl-nav .jl-brand {display:flex;align-items:center;gap:12px;font-size:17px;font-weight:800;letter-spacing:-.5px;color:#f0f1e9;white-space:nowrap}
+.jl-mark {display:grid;place-items:center;width:38px;height:38px;background:#d1ff55;color:#141713;font-size:16px;letter-spacing:-2px}
+.jl-links {display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.jl-links a {font-size:13px;padding:8px 0;border-bottom:2px solid transparent}
+.jl-links a:hover,.jl-links a[aria-current] {color:#d1ff55;border-bottom-color:#d1ff55}
+html[data-jl-theme="page"] body {max-width:1200px;margin:0 auto;padding:0 32px 56px;line-height:1.6}
+html[data-jl-theme="page"] h1 {font-size:clamp(30px,4.2vw,52px);line-height:1.08;letter-spacing:-1.6px;font-weight:750;margin:26px 0 12px}
+html[data-jl-theme="page"] h2 {font-size:23px;letter-spacing:-.6px}
+html[data-jl-theme="page"] .sub {color:#b1b8a8;line-height:1.6}
+html[data-jl-theme="page"] :is(.card,.metric,.verdict,.proj,.ecard,.log,.tg-trophy,.tg-stat) {background:#1e231c;border-color:#394232;border-radius:5px;color:#f0f1e9}
+html[data-jl-theme="page"] .grid {gap:20px}
+html[data-jl-theme="page"] .card {padding:24px}
+html[data-jl-theme="page"] a.card:hover {border-color:#d1ff55;box-shadow:5px 5px 0 #394232;transform:translateY(-3px)}
+html[data-jl-theme="page"] :is(.ctitle,.card h3) {font-size:22px;letter-spacing:-.5px}
+html[data-jl-theme="page"] :is(.cdesc,.method,.hint,.foot) {color:#b1b8a8}
+html[data-jl-theme="page"] :is(input,select,textarea) {background:#1e231c;color:#f0f1e9;border:1px solid #59664f;border-radius:4px}
+html[data-jl-theme="page"] :is(button,.btn.primary,.seg button.on,.tab.on) {background:#d1ff55;color:#141713;border-radius:4px;border-color:#d1ff55}
+html[data-jl-theme="page"] button:disabled {opacity:.55}
+html[data-jl-theme="page"] .seg button:not(.on) {background:#1e231c;color:#b1b8a8}
+html[data-jl-theme="page"] :is(.wrap,.container) {max-width:100%;padding-left:0;padding-right:0}
+html[data-jl-theme="page"] table {background:#1e231c;border-color:#394232}
+html[data-jl-theme="page"] :is(th,td) {border-color:#394232}
+html[data-jl-theme="page"] .num {font-variant-numeric:tabular-nums}
+html[data-jl-theme="home"] .jl-nav {max-width:1192px;width:100%;margin-bottom:0}
+html[data-jl-theme="home"] :is(.intro,.about-copy>p) {color:#b1b8a8}
+html[data-jl-theme="home"] .button {background:#d1ff55;color:#141713;border-color:#d1ff55}
+html[data-jl-theme="home"] :is(.project,.hero-art,.closing,.resume) {border-color:#394232}
+html[data-jl-theme="home"] .project.research {background:#28253b}
+html[data-jl-theme="home"] .project.arcade {background:#26321c}
+html[data-jl-theme="home"] .project {color:#f0f1e9}
+html[data-jl-theme="home"] .project-bottom {border-color:#ffffff26}
+html[data-jl-theme="home"] .project:hover {box-shadow:7px 7px 0 #394232}
+html[data-jl-theme="home"] .hero-art {background:#294bf5;box-shadow:9px 9px 0 #323d25}
+html[data-jl-theme="home"] :is(.splash-button,.sticker,.tile) {color:#141713;border-color:#141713}
+html[data-jl-theme="home"] .tile {background:#d1ff55;box-shadow:4px 5px 0 #0005}
+html[data-jl-theme="home"] .flower .center-label {fill:#20221e}
+html[data-jl-theme="home"] .closing {background:#1e231c;color:#f0f1e9}
+html[data-jl-theme="home"] .tools-menu {background:#1e231c;border-color:#394232;box-shadow:4px 4px 0 #0008}
+html[data-jl-theme="home"] .row-icon {background:#293123;color:#d1ff55}
+/* Game geometry and semantic tile colors stay with the game. */
+html[data-jl-theme="game"] {--color-background:#141713;--color-text:#f0f1e9;--color-tone-1:#f0f1e9;--color-tone-2:#b1b8a8;--color-tone-3:#59664f;--color-tone-4:#394232;--color-tone-5:#293123;--color-tone-6:#1e231c;--color-tone-7:#141713;--color-gray-100:#f0f1e9;--color-gray-300:#b1b8a8;--color-gray-700:#394232;--color-gray-900:#1e231c}
+html[data-jl-game="connections"] body {--background:90 13% 8%;--foreground:68 23% 93%;--card:94 11% 12%;--card-foreground:68 23% 93%;--popover:94 11% 12%;--popover-foreground:68 23% 93%;--secondary:94 17% 16%;--secondary-foreground:68 23% 93%;--muted:94 17% 16%;--muted-foreground:86 10% 69%;--border:94 14% 23%;--input:94 14% 23%;--accent:94 17% 16%;--accent-foreground:68 23% 93%}
+@media(max-width:760px) {
+ .jl-nav {align-items:flex-start;flex-direction:column;gap:14px;padding:20px 0;margin-bottom:26px}
+ .jl-links {gap:8px 20px;width:100%}.jl-links a{font-size:12px}
+ html[data-jl-theme="page"] body{padding:0 20px 40px}
+ html[data-jl-theme="home"] .jl-nav{width:100%}
+ html[data-jl-theme="page"] .card{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){html[data-jl-theme] *,html[data-jl-theme] *::before,html[data-jl-theme] *::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+@media print {html[data-jl-theme],html[data-jl-theme] body{background:white!important;color:black!important}.jl-nav{display:none}}
+
+html[data-jl-theme="page"] body {box-sizing:border-box}
+html[data-jl-game="spellingbee"] {--el-bg-color:#141713;--el-bg-color-page:#141713;--el-bg-color-overlay:#1e231c;--el-fill-color-blank:#1e231c;--el-fill-color-light:#293123;--el-fill-color:#293123;--el-text-color-primary:#f0f1e9;--el-text-color-regular:#f0f1e9;--el-text-color-secondary:#b1b8a8;--el-border-color:#394232;--el-border-color-light:#394232;--el-border-color-lighter:#394232}
+html[data-jl-game="spellingbee"] #app {color:#f0f1e9}
+html[data-jl-game="spellingbee"] .hive-action {background-color:#293123;color:#f0f1e9;border-color:#59664f}
+html[data-jl-game="spellingbee"] .hive-action__shuffle {background-color:#b1b8a8}
+html[data-jl-game="spellingbee"] .darkmode-switch {display:none}
+html[data-jl-game="spellingbee"] .el-collapse {background:#1e231c}
+
+html[data-jl-game="crossword"] :is(.cw-overflow,.modal-content,.cw-menu) {background:#1e231c;color:#f0f1e9}
+html[data-jl-game="crossword"] :is(.cw-header,.modal-header,.cw-top-clue-bar,.cw-clue.active) {background:#293123;color:#f0f1e9}
+html[data-jl-game="crossword"] .cw-button {background:#293123;color:#f0f1e9}
+html[data-jl-game="crossword"] .cw-button-open-puzzle {background:#d1ff55;color:#141713}
+html[data-jl-game="crossword"] :is(.cw-button:hover,.cw-menu-item:hover) {background:#394232;color:#f0f1e9}
